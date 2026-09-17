@@ -157,7 +157,7 @@
 <div class="container">
   <header>
     <h1>上班族中英夾雜口語記誦庫</h1>
-    <p class="subtitle">共收錄 221 個高頻實務詞彙｜已納入縮寫英文全名｜跨平台流暢運行</p>
+    <p class="subtitle">共收錄 230 個高頻實務詞彙｜已納入縮寫英文全名｜全平台相容支援</p>
   </header>
 
   <div class="control-panel">
@@ -203,6 +203,9 @@ const wordsData = [
   { c: "A. 會議與溝通", w: "reschedule", kk: "/riˈskɛdʒul/", l: "★", m: "改時間", ex: "要 reschedule 嗎？" },
   { c: "A. 會議與溝通", w: "kick off", kk: "/ˈkɪkˌɔf/", l: "★", m: "啟動、開始", ex: "下週 kick off。" },
   { c: "A. 會議與溝通", w: "rundown", kk: "/ˈrʌnˌdaʊn/", l: "★", m: "活動流程表、環節安排", ex: "活動前大家先對一下 rundown。" },
+  { c: "A. 會議與溝通", w: "arrival", kk: "/əˈraɪvəl/", l: "★", m: "抵達、迎賓報到", ex: "首長 arrival 的接待動線務必事先跟物業對齊好。" },
+  { c: "A. 會議與溝通", w: "facility tour", kk: "/fəˈsɪləti tʊr/", l: "★", m: "設施帶看、場館導覽", ex: "前半段安排 20 分鐘的 facility tour，參觀高空私廚與諮詢室。" },
+  { c: "A. 會議與溝通", w: "departure", kk: "/dɪˈpɑrtʃɚ/", l: "★", m: "離場、賦歸", ex: "貴賓 departure 前記得送上精裝伴手禮。" },
   { c: "A. 會議與溝通", w: "stand-up", kk: "/ˈstændˌʌp/", l: "★", m: "站立短會、每日同步", ex: "每天早上先 stand-up 一下。" },
   { c: "A. 會議與溝通", w: "one-on-one", full: "1-on-1 Meeting", kk: "/ˌwʌn ɑn ˈwʌn/", l: "★", m: "一對一面談", ex: "下週跟主管排個 1:1。" },
   { c: "A. 會議與溝通", w: "circle back", kk: "/ˈsɝkəl bæk/", l: "★", m: "之後再回來討論", ex: "這題先記著，晚點 circle back。" },
@@ -231,6 +234,7 @@ const wordsData = [
   { c: "B. 專案、進度與問題", w: "urgent", kk: "/ˈɝdʒənt/", l: "★", m: "緊急", ex: "很 urgent，先處理。" },
   { c: "B. 專案、進度與問題", w: "backup", kk: "/ˈbækˌʌp/", l: "★", m: "備案、支援、代理人", ex: "找我當 backup。" },
   { c: "B. 專案、進度與問題", w: "fallback plan", kk: "/ˈfɔlˌbæk plæn/", l: "☆", m: "退路、備用退守方案", ex: "如果主機掛掉，fallback plan 是什麼？" },
+  { c: "B. 專案、進度與問題", w: "version", full: "Version", kk: "/ˈvɝʒən/", l: "★", m: "版本、版次（簡寫 ver. / V）", ex: "簡報請以昨晚寄出的 V2 最終確認版為準。" },
   { c: "B. 專案、進度與問題", w: "roll out", kk: "/rol aʊt/", l: "★", m: "逐步推出、發布上線", ex: "預計下週二正式 roll out。" },
   { c: "B. 專案、進度與問題", w: "ETA", full: "Estimated Time of Arrival", kk: "/ˌi ti ˈe/", l: "★", m: "預計完成／到達時間", ex: "ETA 什麼時候？" },
   { c: "B. 專案、進度與問題", w: "TBD", full: "To Be Determined", kk: "/ˌti bi ˈdi/", l: "★", m: "待決定", ex: "人選 TBD。" },
@@ -293,6 +297,7 @@ const wordsData = [
   { c: "D. 公司、人事與職稱", w: "client", kk: "/ˈklaɪənt/", l: "★", m: "客戶", ex: "client 要改規格。" },
   { c: "D. 公司、人事與職稱", w: "vendor", kk: "/ˈvɛndɚ/", l: "★", m: "廠商", ex: "vendor 明天來裝機。" },
   { c: "D. 公司、人事與職稱", w: "stakeholder", kk: "/ˈstekˌholdɚ/", l: "☆", m: "利害關係人", ex: "先跟 stakeholder 對齊。" },
+  { c: "D. 公司、人事與職稱", w: "VIP", full: "Very Important Person", kk: "/ˌvi.aɪˈpi/", l: "★", m: "貴賓、要客", ex: "專屬電梯先預留給今天到訪的 VIP。" },
   { c: "D. 公司、人事與職稱", w: "HR", full: "Human Resources", kk: "/ˌetʃ ˈɑr/", l: "★", m: "人資", ex: "HR 會寄通知。" },
   { c: "D. 公司、人事與職稱", w: "IT", full: "Information Technology", kk: "/ˌaɪ ˈti/", l: "★", m: "資訊", ex: "IT 幫忙開權限。" },
   { c: "D. 公司、人事與職稱", w: "MIS", full: "Management Information System", kk: "/ˌɛm aɪ ˈɛs/", l: "☆", m: "資訊部門", ex: "MIS 處理系統。" },
@@ -441,6 +446,8 @@ const wordsData = [
   { c: "I. 策略、思考與評估", w: "ballpark", kk: "/ˈbɔlˌpɑrk/", l: "★", m: "大概數字、粗估", ex: "先給我一個 ballpark 數字。" },
   { c: "I. 策略、思考與評估", w: "low-hanging fruit", kk: "/ˈlo ˈhæŋɪŋ frut/", l: "☆", m: "容易達成的成果", ex: "先做 low-hanging fruit。" },
   { c: "I. 策略、思考與評估", w: "win-win", kk: "/ˈwɪn ˌwɪn/", l: "★", m: "雙贏", ex: "找一個 win-win 的方案。" },
+  { c: "I. 策略、思考與評估", w: "hook", kk: "/hʊk/", l: "★", m: "誘因、吸睛切入點", ex: "提案開頭要先放一個 hook 抓住首長的目光。" },
+  { c: "I. 策略、思考與評估", w: "arsenal", kk: "/ˈɑrsn-əl/", l: "☆", m: "資源庫、策略工具（軍火庫）", ex: "我們的 PR arsenal 已經備妥五大資源支援。" },
   { c: "I. 策略、思考與評估", w: "synergy", kk: "/ˈsɪnɚdʒi/", l: "★", m: "綜效、加乘效應", ex: "保險業務跟電商會員名單結合能產生很大的 synergy。" },
   { c: "I. 策略、思考與評估", w: "feasibility", kk: "/ˌfizəˈbɪləti/", l: "★", m: "可行性", ex: "先評估這個商業模式的 financial feasibility。" },
   { c: "I. 策略、思考與評估", w: "sanity check", kk: "/ˈsænəti tʃɛk/", l: "★", m: "快速合理性檢查", ex: "簡報寄出前，數字先做一下 sanity check。" },
@@ -462,6 +469,7 @@ const wordsData = [
   { c: "J. 協作與溝通態度", w: "challenge", kk: "/ˈtʃælɪndʒ/", l: "★", m: "提出質疑、挑戰", ex: "簡報時很容易被主管 challenge 數字。" },
   { c: "J. 協作與溝通態度", w: "aggressive", kk: "/əˈɡrɛsɪv/", l: "★", m: "積極進取的、強勢的", ex: "這次商務談判的策略要 aggressive 一點。" },
   { c: "J. 協作與溝通態度", w: "take the lead", kk: "/tek ðə lid/", l: "★", m: "帶頭、主導", ex: "這次你來 take the lead。" },
+  { c: "J. 協作與溝通態度", w: "biz chat", full: "Business Chat", kk: "/bɪz tʃæt/", l: "△", m: "商務便談、業務洽談", ex: "下午茶時間可以輕鬆安排一場 1-on-1 的 biz chat。" },
 
   // K. 企劃、設計與產出
   { c: "K. 企劃、設計與產出", w: "proposal", kk: "/prəˈpozəl/", l: "★", m: "提案報告", ex: "明天中午前要交出下一季的 proposal。" },
@@ -487,6 +495,7 @@ const wordsData = [
   { c: "M. 數據比較與營運指標", w: "H1 / H2", full: "Half 1 / Half 2", kk: "/ˌetʃ ˈwʌn/ / /ˌetʃ ˈtu/", l: "★", m: "上半年／下半年", ex: "H2 的策略會重新調整。" },
   { c: "M. 數據比較與營運指標", w: "CTR", full: "Click-Through Rate", kk: "/ˌsi ti ˈɑr/", l: "★", m: "點擊率", ex: "新素材的 CTR 表現不錯。" },
   { c: "M. 數據比較與營運指標", w: "CVR", full: "Conversion Rate", kk: "/ˌsi vi ˈɑr/", l: "★", m: "轉換率", ex: "落地頁改版提升了整體 CVR。" },
+  { c: "M. 數據比較與營運指標", w: "conversion", kk: "/kənˈvɝʒən/", l: "★", m: "轉換、轉化率", ex: "辦完體驗活動後，後續推動大樓企業卡的 conversion 才是重點。" },
   { c: "M. 數據比較與營運指標", w: "CAC", full: "Customer Acquisition Cost", kk: "/kæk/ 或 /ˌsi e ˈsi/", l: "☆", m: "客戶獲取成本", ex: "最近 CAC 飆高，先暫緩投放。" },
   { c: "M. 數據比較與營運指標", w: "LTV", full: "Lifetime Value", kk: "/ˌɛl ti ˈvi/", l: "☆", m: "顧客終身價值", ex: "訂閱制更要看長期 LTV。" },
   { c: "M. 數據比較與營運指標", w: "GMV", full: "Gross Merchandise Volume", kk: "/ˌdʒi ɛm ˈvi/", l: "☆", m: "商品交易總額", ex: "今年大促 GMV 預估會創新高。" },
@@ -529,7 +538,7 @@ const wordsData = [
   { c: "O. 保險指標與機構", w: "non-par", full: "Non-Participating Policy", kk: "/ˌnɑn ˈpɑr/", l: "☆", m: "不分紅保單", ex: "這張是標準的 non-par 純保障型保單。" },
   { c: "O. 保險指標與機構", w: "UL", full: "Universal Life", kk: "/ˌju ˈɛl/", l: "☆", m: "萬能壽險", ex: "這張是利率敏感型的 UL 商品。" },
   { c: "O. 保險指標與機構", w: "VA", full: "Variable Life", kk: "/ˌvi ˈe/", l: "☆", m: "變額壽險", ex: "VA 的保費通常固定，投資績效自負盈虧。" },
-  { c: "O. 保險指標與機構", w: "VUL", full: "Variable Universal Life", kk: "/ˌvi ju ˈɛl/", l: "☆", m: "變額萬能壽險", ex: "VUL（萬能UL + 變額VA）， 有變額二字即是投資型保單。" },
+  { c: "O. 保險指標與機構", w: "VUL", full: "Variable Universal Life", kk: "/ˌvi ju ˈɛl/", l: "☆", m: "變額萬能壽險", ex: "VUL 有變額二字即是投資型保單。" },
   { c: "O. 保險指標與機構", w: "ILP", full: "Investment-Linked Policy", kk: "/ˌaɪ ɛl ˈpi/", l: "☆", m: "投資型保單", ex: "這檔是連結基金的 ILP。" },
   { c: "O. 保險指標與機構", w: "Unit-linked", kk: "/ˈjunɪt ˌlɪŋkt/", l: "☆", m: "單位連結型／連結基金型", ex: "Unit-linked 商品波動比較大。" },
   { c: "O. 保險指標與機構", w: "WL", full: "Whole Life", kk: "/ˌdʌbəlju ˈɛl/", l: "☆", m: "終身壽險", ex: "傳統型主打還是 WL。" },
@@ -615,6 +624,10 @@ function normalizeToken(token) {
     "N/A": "N A",
     "RAG": "R A G",
     "UW": "U W",
+    "VIP": "V I P",
+    "biz chat": "biz chat",
+    "hook": "hook",
+    "arsenal": "arsenal",
     "1:1": "one on one",
     "S2S": "S to S",
     "B2B": "B to B",
