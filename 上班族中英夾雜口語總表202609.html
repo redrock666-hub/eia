@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上班族中英夾雜口語記誦庫</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-light: #eff6ff;
+    --text-main: #1e293b;
+    --text-sub: #64748b;
+    --bg-main: #f8fafc;
+    --border: #e2e8f0;
+    --card-bg: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--bg-main); color: var(--text-main); padding: 24px 16px 60px; }
+  .container { max-width: 1280px; margin: 0 auto; }
+  
+  /* Header & Controls */
+  header { text-align: center; margin-bottom: 24px; }
+  h1 { font-size: 1.8rem; margin-bottom: 8px; color: #0f172a; }
+  .subtitle { color: var(--text-sub); font-size: 0.95rem; }
+  
+  .control-panel { background: var(--card-bg); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  .search-box { flex: 1; min-width: 240px; }
+  .search-box input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; outline: none; }
+  .search-box input:focus { border-color: var(--primary); }
+  
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); transition: 0.2s; user-select: none; }
+  .btn:hover:not(:disabled) { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+  .btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  
+  .btn-play { background: #10b981; color: #ffffff; border-color: #059669; }
+  .btn-play:hover:not(:disabled) { background: #059669; color: #ffffff; }
+  .btn-pause { background: #f59e0b; color: #ffffff; border-color: #d97706; }
+  .btn-pause:hover:not(:disabled) { background: #d97706; color: #ffffff; }
+  .btn-stop { background: #ef4444; color: #ffffff; border-color: #dc2626; }
+  .btn-stop:hover:not(:disabled) { background: #dc2626; color: #ffffff; }
+
+  /* 畫面右方懸浮控制面板 */
+  .floating-sidebar {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 999;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 12px;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--border);
+  }
+  .floating-sidebar .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 105px;
+    padding: 10px 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+
+  /* Category Filter Pills */
+  .category-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .cat-pill { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; background: var(--card-bg); border: 1px solid var(--border); color: var(--text-sub); }
+  .cat-pill:hover, .cat-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* Word Grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  .card { background: var(--card-bg); border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.2s; position: relative; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+  
+  /* Active playing card highlight */
+  .card.is-playing { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 8px 20px rgba(0,0,0,0.1); background: #f0f7ff; transform: scale(1.02); }
+  .card.is-paused { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25); background: #fffbeb; }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .word-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px; }
+  .speaker-icon { font-size: 1rem; opacity: 0.5; }
+  .card:hover .speaker-icon, .card.is-playing .speaker-icon { opacity: 1; }
+  .badge { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+  .badge-core { background: #dbeafe; color: #1e40af; }
+  .badge-scene { background: #fef3c7; color: #92400e; }
+  .badge-warn { background: #fee2e2; color: #991b1b; }
+  
+  .phonetic { font-family: "Lucida Sans Unicode", "DejaVu Sans", sans-serif; color: #0284c7; font-size: 0.9rem; margin-bottom: 8px; }
+  .meaning { font-size: 0.95rem; font-weight: 600; color: #334155; margin-bottom: 10px; }
+  .example { font-size: 0.85rem; color: var(--text-sub); background: #f1f5f9; padding: 8px 10px; border-radius: 6px; border-left: 3px solid var(--primary); }
+  
+  /* Mask Mode */
+  .mask-mode .meaning, .mask-mode .example { filter: blur(5px); transition: filter 0.2s; user-select: none; }
+  .mask-mode .card:hover .meaning, .mask-mode .card:hover .example,
+  .mask-mode .card.is-playing .meaning, .mask-mode .card.is-playing .example { filter: blur(0); }
+</style>
+</head>
+<body>
+
+<!-- 畫面右側懸浮控制區 -->
+<div class="floating-sidebar">
+  <button class="btn btn-play" id="sidePlayBtn">▶ 連播</button>
+  <button class="btn btn-pause" id="sidePauseBtn" disabled>⏸ 暫停</button>
+  <button class="btn btn-stop" id="sideStopBtn" disabled>⏹ 停止</button>
+</div>
+
+<div class="container">
+  <header>
+    <h1>上班族中英夾雜口語記誦庫</h1>
+    <p class="subtitle">共收錄 221 個高頻實務詞彙｜縮寫逐字朗讀｜支援 2.0x 語速｜右側懸浮控制</p>
+  </header>
+
+  <div class="control-panel">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜尋單字、音標、中文釋義或例句...">
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-play" id="topPlayBtn">▶ 連播本頁</button>
+      <button class="btn btn-pause" id="topPauseBtn" disabled>⏸ 暫停</button>
+      <button class="btn btn-stop" id="topStopBtn" disabled>⏹ 停止</button>
+      <button class="btn" id="maskToggleBtn">開啟遮蔽模式</button>
+      <button class="btn" id="rateBtn" data-rate="1.0">語速：1.0x</button>
+    </div>
+  </div>
+
+  <div class="category-filter" id="catFilter">
+    <span class="cat-pill active" data-cat="all">全部 (All)</span>
+  </div>
+
+  <div class="grid" id="cardContainer"></div>
+</div>
+
+<script>
+const wordsData = [
+  // A. 會議與溝通
+  { c: "A. 會議與溝通", w: "meeting", kk: "/ˈmitɪŋ/", l: "★", m: "會議", ex: "等等 meeting 先 sync 一下。" },
+  { c: "A. 會議與溝通", w: "con-call / con call", kk: "/ˈkɑnˌkɔl/", l: "★", m: "電話會議、視訊會議", ex: "下午有 con-call。" },
+  { c: "A. 會議與溝通", w: "sync", kk: "/sɪŋk/", l: "★", m: "同步", ex: "我們先 sync 進度。" },
+  { c: "A. 會議與溝通", w: "align", kk: "/əˈlaɪn/", l: "★", m: "對齊、確認共識", ex: "先跟主管 align。" },
+  { c: "A. 會議與溝通", w: "loop in", kk: "/lup ɪn/", l: "★", m: "把某人加入溝通／副本", ex: "記得 loop in 客戶。" },
+  { c: "A. 會議與溝通", w: "follow up", kk: "/ˈfɑlo ʌp/", l: "★", m: "跟進、追蹤", ex: "這件 follow up 一下。" },
+  { c: "A. 會議與溝通", w: "touch base", kk: "/tʌtʃ bes/", l: "★", m: "簡短碰一下、聊一下", ex: "晚點 touch base。" },
+  { c: "A. 會議與溝通", w: "ping", kk: "/pɪŋ/", l: "★", m: "傳訊息敲人", ex: "有問題 ping 我。" },
+  { c: "A. 會議與溝通", w: "offline", kk: "/ˈɔfˌlaɪn/", l: "★", m: "私下講、會後聊", ex: "這件事 offline 聊。" },
+  { c: "A. 會議與溝通", w: "agenda", kk: "/əˈdʒɛndə/", l: "★", m: "議程", ex: "agenda 先寄給大家。" },
+  { c: "A. 會議與溝通", w: "minutes", kk: "/ˈmɪnɪts/", l: "★", m: "會議紀錄", ex: "minutes 記得寄。" },
+  { c: "A. 會議與溝通", w: "action item", kk: "/ˈækʃən ˌaɪtəm/", l: "★", m: "待辦事項", ex: "action item 誰負責？" },
+  { c: "A. 會議與溝通", w: "takeaway", kk: "/ˈtekəˌwe/", l: "★", m: "重點、結論", ex: "今天 takeaway 是什麼？" },
+  { c: "A. 會議與溝通", w: "brief", kk: "/brif/", l: "★", m: "簡報、重點說明", ex: "先 brief 一下狀況。" },
+  { c: "A. 會議與溝通", w: "recap", kk: "/ˈriˌkæp/", l: "★", m: "重新摘要、重點回顧", ex: "先快速 recap 一下上次的結論。" },
+  { c: "A. 會議與溝通", w: "update", kk: "/ˈʌpˌdet/", l: "★", m: "更新進度", ex: "下班前給我 update。" },
+  { c: "A. 會議與溝通", w: "confirm", kk: "/kənˈfɝm/", l: "★", m: "確認", ex: "請 confirm 時間。" },
+  { c: "A. 會議與溝通", w: "double check", kk: "/ˈdʌbəl tʃɛk/", l: "★", m: "再確認一次", ex: "double check 數字。" },
+  { c: "A. 會議與溝通", w: "heads-up", kk: "/ˈhɛdzˌʌp/", l: "★", m: "事先提醒、預先打招呼", ex: "先給你一個 heads-up，明天可能要趕工。" },
+  { c: "A. 會議與溝通", w: "postpone", kk: "/postˈpon/", l: "★", m: "延期", ex: "會議先 postpone。" },
+  { c: "A. 會議與溝通", w: "reschedule", kk: "/riˈskɛdʒul/", l: "★", m: "改時間", ex: "要 reschedule 嗎？" },
+  { c: "A. 會議與溝通", w: "kick off", kk: "/ˈkɪkˌɔf/", l: "★", m: "啟動、開始", ex: "下週 kick off。" },
+  { c: "A. 會議與溝通", w: "rundown", kk: "/ˈrʌnˌdaʊn/", l: "★", m: "活動流程表、環節安排", ex: "活動前大家先對一下 rundown。" },
+  { c: "A. 會議與溝通", w: "stand-up", kk: "/ˈstændˌʌp/", l: "★", m: "站立短會、每日同步", ex: "每天早上先 stand-up 一下。" },
+  { c: "A. 會議與溝通", w: "one-on-one", kk: "/ˌwʌn ɑn ˈwʌn/", l: "★", m: "一對一面談", ex: "下週跟主管排個 1:1。" },
+  { c: "A. 會議與溝通", w: "circle back", kk: "/ˈsɝkəl bæk/", l: "★", m: "之後再回來討論", ex: "這題先記著，晚點 circle back。" },
+  { c: "A. 會議與溝通", w: "deep dive", kk: "/ˈdip ˌdaɪv/", l: "★", m: "深入探討", ex: "這部分需要再 deep dive。" },
+
+  // B. 專案、進度與問題
+  { c: "B. 專案、進度與問題", w: "project", kk: "/ˈprɑdʒɛkt/", l: "★", m: "專案", ex: "這 project 很大。" },
+  { c: "B. 專案、進度與問題", w: "case", kk: "/kes/", l: "★", m: "案子", ex: "這 case 誰負責？" },
+  { c: "B. 專案、進度與問題", w: "task", kk: "/tæsk/", l: "★", m: "任務", ex: "這 task 給你。" },
+  { c: "B. 專案、進度與問題", w: "deadline", kk: "/ˈdɛdˌlaɪn/", l: "★", m: "截止期限", ex: "deadline 快到了。" },
+  { c: "B. 專案、進度與問題", w: "due date", kk: "/ˈdu ˌdet/", l: "★", m: "到期日", ex: "due date 是週五。" },
+  { c: "B. 專案、進度與問題", w: "schedule", kk: "/ˈskɛdʒʊl/", l: "★", m: "時程", ex: "schedule 排一下。" },
+  { c: "B. 專案、進度與問題", w: "timeline", kk: "/ˈtaɪmˌlaɪn/", l: "★", m: "時間表", ex: "timeline 拉出來。" },
+  { c: "B. 專案、進度與問題", w: "milestone", kk: "/ˈmaɪlˌston/", l: "★", m: "里程碑", ex: "下個 milestone 是月底。" },
+  { c: "B. 專案、進度與問題", w: "deliverable", kk: "/dɪˈlɪvərəbəl/", l: "★", m: "交付項目", ex: "deliverable 是什麼？" },
+  { c: "B. 專案、進度與問題", w: "scope", kk: "/skop/", l: "★", m: "範圍、範疇", ex: "先定義清楚這期的 project scope。" },
+  { c: "B. 專案、進度與問題", w: "scope creep", kk: "/skop krip/", l: "☆", m: "範圍蔓延（需求無止境膨脹）", ex: "小心不要造成 scope creep。" },
+  { c: "B. 專案、進度與問題", w: "progress", kk: "/ˈprɑgrɛs/", l: "★", m: "進度", ex: "progress 到哪？" },
+  { c: "B. 專案、進度與問題", w: "pending", kk: "/ˈpɛndɪŋ/", l: "★", m: "待處理", ex: "先 pending。" },
+  { c: "B. 專案、進度與問題", w: "issue", kk: "/ˈɪʃu/", l: "★", m: "問題、議題", ex: "開 issue 追蹤。" },
+  { c: "B. 專案、進度與問題", w: "blocker", kk: "/ˈblɑkɚ/", l: "★", m: "阻礙、卡關事項", ex: "今天 daily 有什麼 blocker 嗎？" },
+  { c: "B. 專案、進度與問題", w: "roadblock", kk: "/ˈrodˌblɑk/", l: "★", m: "絆腳石、主要障礙", ex: "目前專案推進最大的 roadblock 是預算被砍。" },
+  { c: "B. 專案、進度與問題", w: "workaround", kk: "/ˈwɝkəˌraʊnd/", l: "★", m: "替代解法、融通做法", ex: "先找個 workaround 頂著，下版再修。" },
+  { c: "B. 專案、進度與問題", w: "priority", kk: "/praɪˈɔrəti/", l: "★", m: "優先事項", ex: "這是 priority。" },
+  { c: "B. 專案、進度與問題", w: "prioritize", kk: "/praɪˈɔrəˌtaɪz/", l: "★", m: "排定優先順序", ex: "資源有限，這週先 prioritize 核心功能。" },
+  { c: "B. 專案、進度與問題", w: "urgent", kk: "/ˈɝdʒənt/", l: "★", m: "緊急", ex: "很 urgent，先處理。" },
+  { c: "B. 專案、進度與問題", w: "backup", kk: "/ˈbækˌʌp/", l: "★", m: "備案、支援、代理人", ex: "找我當 backup。" },
+  { c: "B. 專案、進度與問題", w: "fallback plan", kk: "/ˈfɔlˌbæk plæn/", l: "☆", m: "退路、備用退守方案", ex: "如果主機掛掉，fallback plan 是什麼？" },
+  { c: "B. 專案、進度與問題", w: "roll out", kk: "/rol aʊt/", l: "★", m: "逐步推出、發布上線", ex: "預計下週二正式 roll out。" },
+  { c: "B. 專案、進度與問題", w: "ETA", kk: "/ˌi ti ˈe/", l: "★", m: "預計完成／到達時間", ex: "ETA 什麼時候？" },
+  { c: "B. 專案、進度與問題", w: "TBD", kk: "/ˌti bi ˈdi/", l: "★", m: "待決定", ex: "人選 TBD。" },
+  { c: "B. 專案、進度與問題", w: "TBC", kk: "/ˌti bi ˈsi/", l: "★", m: "待確認", ex: "時間 TBC。" },
+  { c: "B. 專案、進度與問題", w: "N/A", kk: "/ˌɛn ˈe/", l: "★", m: "不適用", ex: "這欄 N/A。" },
+  { c: "B. 專案、進度與問題", w: "close", kk: "/kloz/", l: "★", m: "結案", ex: "這案可以 close 了。" },
+  { c: "B. 專案、進度與問題", w: "delay", kk: "/dɪˈle/", l: "★", m: "延遲", ex: "資料有 delay。" },
+  { c: "B. 專案、進度與問題", w: "buffer", kk: "/ˈbʌfɚ/", l: "★", m: "緩衝時間、空間", ex: "時程留一點 buffer。" },
+  { c: "B. 專案、進度與問題", w: "plan", kk: "/plæn/", l: "★", m: "計畫", ex: "先確認 plan。" },
+  { c: "B. 專案、進度與問題", w: "backlog", kk: "/ˈbækˌlɑɡ/", l: "★", m: "待辦清單、積壓項目", ex: "先把 backlog 清一清。" },
+  { c: "B. 專案、進度與問題", w: "sprint", kk: "/sprɪnt/", l: "☆", m: "衝刺週期（敏捷）", ex: "這個 sprint 目標是什麼？" },
+  { c: "B. 專案、進度與問題", w: "dependency", kk: "/dɪˈpɛndənsi/", l: "★", m: "相依項目、依賴關係", ex: "這個 task 有 dependency。" },
+
+  // C. Email、文件、合規與常用縮寫
+  { c: "C. Email、文件與合規", w: "email", kk: "/ˈiˌmel/", l: "★", m: "電子郵件", ex: "寄 email 通知。" },
+  { c: "C. Email、文件與合規", w: "cc", kk: "/ˌsi ˈsi/", l: "★", m: "副本", ex: "cc 我。" },
+  { c: "C. Email、文件與合規", w: "bcc", kk: "/ˌbi si ˈsi/", l: "★", m: "密件副本", ex: "bcc 給主管。" },
+  { c: "C. Email、文件與合規", w: "attachment", kk: "/əˈtætʃmənt/", l: "★", m: "附件", ex: "attachment 沒夾到。" },
+  { c: "C. Email、文件與合規", w: "subject", kk: "/ˈsʌbdʒɪkt/", l: "★", m: "主旨", ex: "subject 寫清楚。" },
+  { c: "C. Email、文件與合規", w: "reply", kk: "/rɪˈplaɪ/", l: "★", m: "回覆", ex: "請 reply 確認。" },
+  { c: "C. Email、文件與合規", w: "reply all", kk: "/rɪˈplaɪ ɔl/", l: "★", m: "回覆全部", ex: "不要 reply all。" },
+  { c: "C. Email、文件與合規", w: "forward", kk: "/ˈfɔrwɚd/", l: "★", m: "轉寄", ex: "幫我 forward 給客戶。" },
+  { c: "C. Email、文件與合規", w: "FYI", kk: "/ˌɛf waɪ ˈaɪ/", l: "★", m: "供參考", ex: "FYI，客戶改時間。" },
+  { c: "C. Email、文件與合規", w: "ASAP", kk: "/ˌe ɛs e ˈpi/ 或 /ˈeˌsæp/", l: "★", m: "盡快", ex: "ASAP 處理。" },
+  { c: "C. Email、文件與合規", w: "EOD", kk: "/ˌi o ˈdi/", l: "★", m: "今日下班前", ex: "EOD 前給我。" },
+  { c: "C. Email、文件與合規", w: "COB", kk: "/ˌsi o ˈbi/", l: "★", m: "下班前", ex: "COB 前回覆。" },
+  { c: "C. Email、文件與合規", w: "RSVP", kk: "/ˌɑr ɛs vi ˈpi/", l: "☆", m: "請回覆是否出席", ex: "記得 RSVP。" },
+  { c: "C. Email、文件與合規", w: "OOO", kk: "/ˌo o ˈo/", l: "★", m: "不在辦公室", ex: "我會設 OOO。" },
+  { c: "C. Email、文件與合規", w: "PTO", kk: "/ˌpi ti ˈo/", l: "☆", m: "帶薪休假", ex: "我下週請 PTO。" },
+  { c: "C. Email、文件與合規", w: "KPI", kk: "/ˌke pi ˈaɪ/", l: "★", m: "關鍵績效指標", ex: "KPI 要達標。" },
+  { c: "C. Email、文件與合規", w: "OKR", kk: "/ˌo ke ˈɑr/", l: "☆", m: "目標與關鍵結果", ex: "這季 OKR 訂好了。" },
+  { c: "C. Email、文件與合規", w: "SOP", kk: "/ˌɛs o ˈpi/", l: "★", m: "標準作業流程", ex: "照 SOP 走。" },
+  { c: "C. Email、文件與合規", w: "ROI", kk: "/ˌɑr o ˈaɪ/", l: "☆", m: "投資報酬率", ex: "這個 ROI 不高。" },
+  { c: "C. Email、文件與合規", w: "PO", kk: "/ˌpi ˈo/", l: "☆", m: "採購單", ex: "PO 還沒開。" },
+  { c: "C. Email、文件與合規", w: "RFP", kk: "/ˌɑr ɛf ˈpi/", l: "☆", m: "提案邀請", ex: "RFP 下週截止。" },
+  { c: "C. Email、文件與合規", w: "PDF", kk: "/ˌpi di ˈɛf/", l: "★", m: "PDF 格式文件", ex: "合約轉 PDF 再寄。" },
+  { c: "C. Email、文件與合規", w: "Excel", kk: "/ɪkˈsɛl/", l: "★", m: "Excel 試算表", ex: "用 Excel 拉數字。" },
+  { c: "C. Email、文件與合規", w: "copy", kk: "/ˈkɑpi/", l: "★", m: "複製、拷貝", ex: "從廠商那邊 copy 一套。" },
+  { c: "C. Email、文件與合規", w: "package", kk: "/ˈpækɪdʒ/", l: "☆", m: "套件、整包方案", ex: "這個 package 多少錢？" },
+  { c: "C. Email、文件與合規", w: "structure", kk: "/ˈstrʌktʃɚ/", l: "★", m: "架構", ex: "先把 structure 畫出來。" },
+  { c: "C. Email、文件與合規", w: "confidential", kk: "/ˌkɑnfəˈdɛnʃəl/", l: "★", m: "機密的、保密的", ex: "這份 proposal 含有 confidential 數據，不能外流。" },
+  { c: "C. Email、文件與合規", w: "compliance", kk: "/kəmˈplaɪəns/", l: "★", m: "法遵、合規", ex: "這份新契約流程要先送 compliance 審核。" },
+  { c: "C. Email、文件與合規", w: "audit", kk: "/ˈɔdɪt/", l: "★", m: "稽核、查核", ex: "下個月金管會跟內部稽核要來 audit。" },
+  { c: "C. Email、文件與合規", w: "risk assessment", kk: "/rɪsk əˈsɛsmənt/", l: "★", m: "風險評估", ex: "導入外部 API 前必須先完成 risk assessment。" },
+  { c: "C. Email、文件與合規", w: "breach", kk: "/britʃ/", l: "★", m: "違規、洩漏、違約", ex: "發生個資 security breach 必須在 72 小時內通報。" },
+  { c: "C. Email、文件與合規", w: "sign-off", kk: "/ˈsaɪnˌɔf/", l: "★", m: "簽核、正式核可", ex: "等法務跟資安主管 sign-off 才能上線。" },
+  { c: "C. Email、文件與合規", w: "escalate", kk: "/ˈɛskəˌlet/", l: "★", m: "向上呈報（升級處理）", ex: "如果廠商今天沒回覆，這件事要立刻 escalate 給副總。" },
+  { c: "C. Email、文件與合規", w: "DD", kk: "/ˌdi ˈdi/", l: "★", m: "盡職調查（Due Diligence）", ex: "簽訂代理合約之前，保險公司法遵部門要先做供應商 DD。" },
+  { c: "C. Email、文件與合規", w: "ISMS", kk: "/ˌaɪ ɛs ɛm ˈɛs/", l: "★", m: "資訊安全管理系統（ISO 27001）", ex: "外商保險公司合作前，一定會要求經代端先取得 ISMS 資安認證。" },
+  { c: "C. Email、文件與合規", w: "PIMS", kk: "/pɪmz/", l: "★", m: "個人資訊管理系統（ISO 27701）", ex: "為了防止客戶個資外洩，公司 Q4 必須把 PIMS 認證拿下來。" },
+  { c: "C. Email、文件與合規", w: "thread", kk: "/θrɛd/", l: "★", m: "郵件串、對話串", ex: "直接在原 thread 回就好。" },
+  { c: "C. Email、文件與合規", w: "signature", kk: "/ˈsɪɡnətʃɚ/", l: "★", m: "簽名檔", ex: "記得加上公司 signature。" },
+
+  // D. 公司、人事與職稱
+  { c: "D. 公司、人事與職稱", w: "boss", kk: "/bɔs/", l: "★", m: "老闆、主管", ex: "boss 剛問進度。" },
+  { c: "D. 公司、人事與職稱", w: "manager", kk: "/ˈmænɪdʒɚ/", l: "★", m: "經理", ex: "manager 同意了。" },
+  { c: "D. 公司、人事與職稱", w: "colleague", kk: "/ˈkɑlig/", l: "★", m: "同事", ex: "colleague 很幫忙。" },
+  { c: "D. 公司、人事與職稱", w: "team", kk: "/tim/", l: "★", m: "團隊", ex: "team 先分組。" },
+  { c: "D. 公司、人事與職稱", w: "department", kk: "/dɪˈpɑrtmənt/", l: "★", m: "部門", ex: "跨 department 溝通。" },
+  { c: "D. 公司、人事與職稱", w: "client", kk: "/ˈklaɪənt/", l: "★", m: "客戶", ex: "client 要改規格。" },
+  { c: "D. 公司、人事與職稱", w: "vendor", kk: "/ˈvɛndɚ/", l: "★", m: "廠商", ex: "vendor 明天來裝機。" },
+  { c: "D. 公司、人事與職稱", w: "stakeholder", kk: "/ˈstekˌholdɚ/", l: "☆", m: "利害關係人", ex: "先跟 stakeholder 對齊。" },
+  { c: "D. 公司、人事與職稱", w: "HR", kk: "/ˌetʃ ˈɑr/", l: "★", m: "人資", ex: "HR 會寄通知。" },
+  { c: "D. 公司、人事與職稱", w: "IT", kk: "/ˌaɪ ˈti/", l: "★", m: "資訊", ex: "IT 幫忙開權限。" },
+  { c: "D. 公司、人事與職稱", w: "MIS", kk: "/ˌɛm aɪ ˈɛs/", l: "☆", m: "資訊部門", ex: "MIS 處理系統。" },
+  { c: "D. 公司、人事與職稱", w: "admin", kk: "/ˈædˌmɪn/", l: "★", m: "行政", ex: "admin 會處理。" },
+  { c: "D. 公司、人事與職稱", w: "assistant", kk: "/əˈsɪstənt/", l: "★", m: "助理", ex: "請 assistant 訂會議室。" },
+  { c: "D. 公司、人事與職稱", w: "PA", kk: "/ˌpi ˈe/", l: "★", m: "個人助理 / 專案助理", ex: "這份資料我請 PA 協助打開確認。" },
+  { c: "D. 公司、人事與職稱", w: "PM", kk: "/ˌpi ˈɛm/", l: "★", m: "專案經理／產品經理", ex: "PM 排一下時程。" },
+  { c: "D. 公司、人事與職稱", w: "RD", kk: "/ˌɑr ˈdi/", l: "★", m: "研發", ex: "RD 還在修。" },
+  { c: "D. 公司、人事與職稱", w: "QA", kk: "/ˌkju ˈe/", l: "★", m: "品質保證", ex: "QA 測完才能上。" },
+  { c: "D. 公司、人事與職稱", w: "QC", kk: "/ˌkju ˈsi/", l: "★", m: "品管、品質檢核", ex: "QC 抽檢沒過。" },
+  { c: "D. 公司、人事與職稱", w: "sales", kk: "/selz/", l: "★", m: "業務", ex: "sales 今天進單。" },
+  { c: "D. 公司、人事與職稱", w: "marketing", kk: "/ˈmɑrkɪtɪŋ/", l: "★", m: "行銷", ex: "marketing 要辦活動。" },
+  { c: "D. 公司、人事與職稱", w: "finance", kk: "/ˈfaɪnæns/ 或 /fəˈnæns/", l: "★", m: "財務", ex: "finance 說預算不夠。" },
+  { c: "D. 公司、人事與職稱", w: "legal", kk: "/ˈligəl/", l: "★", m: "法務", ex: "這份給 legal 看。" },
+  { c: "D. 公司、人事與職稱", w: "ops (operations)", kk: "/ɑps/", l: "☆", m: "營運（operations 的縮寫）", ex: "ops 要支援一下。" },
+  { c: "D. 公司、人事與職稱", w: "performance review", kk: "/pɚˈfɔrməns rɪˈvju/", l: "★", m: "績效評估", ex: "performance review 快到了。" },
+  { c: "D. 公司、人事與職稱", w: "promotion", kk: "/prəˈmoʃən/", l: "★", m: "升遷", ex: "他今年有機會 promotion。" },
+  { c: "D. 公司、人事與職稱", w: "raise", kk: "/rez/", l: "★", m: "加薪", ex: "我想談 raise。" },
+  { c: "D. 公司、人事與職稱", w: "resign", kk: "/rɪˈzaɪn/", l: "★", m: "離職", ex: "他上週 resign 了。" },
+  { c: "D. 公司、人事與職稱", w: "notice period", kk: "/ˈnotɪs ˈpɪriəd/", l: "☆", m: "預告期", ex: "notice period 是一個月。" },
+  { c: "D. 公司、人事與職稱", w: "handover", kk: "/ˈhændˌovɚ/", l: "★", m: "交接", ex: "離職前要 handover。" },
+  { c: "D. 公司、人事與職稱", w: "onboarding", kk: "/ˈɑnˌbɔrdɪŋ/", l: "☆", m: "新人到職", ex: "新人 onboarding 下週開始。" },
+  { c: "D. 公司、人事與職稱", w: "headcount", kk: "/ˈhɛdˌkaʊnt/", l: "☆", m: "員額", ex: "今年 headcount 凍結。" },
+  { c: "D. 公司、人事與職稱", w: "quota", kk: "/ˈkwotə/", l: "☆", m: "業績配額", ex: "這季 quota 差多少？" },
+  { c: "D. 公司、人事與職稱", w: "target", kk: "/ˈtɑrgɪt/", l: "★", m: "目標", ex: "target 要調高。" },
+  { c: "D. 公司、人事與職稱", w: "budget", kk: "/ˈbʌdʒɪt/", l: "★", m: "預算", ex: "budget 不夠。" },
+  { c: "D. 公司、人事與職稱", w: "recruit", kk: "/rɪˈkrut/", l: "★", m: "招募、招聘", ex: "我們要 recruit 兩位工程師。" },
+  { c: "D. 公司、人事與職稱", w: "recruitment", kk: "/rɪˈkrutmənt/", l: "★", m: "招募、招聘（名詞）", ex: "這季 recruitment 進度如何？" },
+  { c: "D. 公司、人事與職稱", w: "hire", kk: "/haɪr/", l: "★", m: "雇用、錄取", ex: "決定 hire 他了嗎？" },
+  { c: "D. 公司、人事與職稱", w: "hiring", kk: "/ˈhaɪrɪŋ/", l: "★", m: "招聘、雇用（進行中）", ex: "目前還在 hiring 階段。" },
+  { c: "D. 公司、人事與職稱", w: "talent acquisition", kk: "/ˈtælənt ˌækwɪˈzɪʃən/", l: "☆", m: "人才招募", ex: "她負責 talent acquisition。" },
+  { c: "D. 公司、人事與職稱", w: "candidate", kk: "/ˈkændɪdeɪt/", l: "★", m: "應徵者、候選人", ex: "這個 candidate 不錯。" },
+  { c: "D. 公司、人事與職稱", w: "interview", kk: "/ˈɪntɚˌvju/", l: "★", m: "面試", ex: "下午有兩場面試 interview。" },
+  { c: "D. 公司、人事與職稱", w: "offer", kk: "/ˈɔfɚ/", l: "★", m: "錄取通知、開出條件", ex: "可以發 offer 了。" },
+  { c: "D. 公司、人事與職稱", w: "sourcing", kk: "/ˈsɔrsɪŋ/", l: "☆", m: "獵才、尋找人才", ex: "這職缺要靠 sourcing。" },
+  { c: "D. 公司、人事與職稱", w: "headhunter", kk: "/ˈhɛdˌhʌntɚ/", l: "☆", m: "獵頭", ex: "這職位找 headhunter 比較快。" },
+  { c: "D. 公司、人事與職稱", w: "referral", kk: "/rɪˈfɝəl/", l: "★", m: "內推、推薦", ex: "有 referral 優先。" },
+  { c: "D. 公司、人事與職稱", w: "HC", kk: "/ˌetʃ ˈsi/", l: "★", m: "headcount 的縮寫", ex: "這個部門 HC 還有兩個空缺。" },
+  { c: "D. 公司、人事與職稱", w: "FTE", kk: "/ˌɛf ti ˈi/", l: "☆", m: "全職等量人力", ex: "目前實際 FTE 是 45.5。" },
+  { c: "D. 公司、人事與職稱", w: "headcount freeze", kk: "/ˈhɛdˌkaʊnt friz/", l: "☆", m: "員額凍結", ex: "公司宣布到年底 headcount freeze。" },
+  { c: "D. 公司、人事與職稱", w: "open headcount", kk: "/ˈopən ˈhɛdˌkaʊnt/", l: "☆", m: "開放員額、空缺名額", ex: "這個 team 還有兩個 open HC。" },
+  { c: "D. 公司、人事與職稱", w: "backfill", kk: "/ˈbækˌfɪl/", l: "★", m: "遞補（有人離職後補人）", ex: "他離職後要不要 backfill？" },
+  { c: "D. 公司、人事與職稱", w: "attrition", kk: "/əˈtrɪʃən/", l: "☆", m: "自然流失（離職造成的人數減少）", ex: "今年 attrition 偏高，HC 一直補不滿。" },
+  { c: "D. 公司、人事與職稱", w: "requisition / req", kk: "/ˌrɛkwɪˈzɪʃən/ / /rɛk/", l: "☆", m: "用人需求單、招聘需求", ex: "先開 req 才能開始找人。" },
+  { c: "D. 公司、人事與職稱", w: "ramp up", kk: "/ræmp ʌp/", l: "☆", m: "快速增加人力", ex: "下季要 ramp up headcount 支援新專案。" },
+  { c: "D. 公司、人事與職稱", w: "headcount planning", kk: "/ˈhɛdˌkaʊnt ˈplænɪŋ/", l: "☆", m: "人力規劃", ex: "下個月要做明年的 headcount planning。" },
+  { c: "D. 公司、人事與職稱", w: "workforce planning", kk: "/ˈwɝkˌfɔrs ˈplænɪŋ/", l: "☆", m: "整體人力規劃", ex: "HR 正在做全公司的 workforce planning。" },
+
+  // E. 工作型態與日常
+  { c: "E. 工作型態與日常", w: "WFH", kk: "/ˌdʌbəlju ɛf ˈetʃ/", l: "★", m: "在家工作", ex: "我今天 WFH。" },
+  { c: "E. 工作型態與日常", w: "remote", kk: "/rɪˈmot/", l: "★", m: "遠端", ex: "今天 remote。" },
+  { c: "E. 工作型態與日常", w: "hybrid", kk: "/ˈhaɪbrɪd/", l: "☆", m: "混合辦公", ex: "公司走 hybrid。" },
+  { c: "E. 工作型態與日常", w: "overtime", kk: "/ˈovɚˌtaɪm/", l: "★", m: "加班", ex: "週末要 overtime。" },
+  { c: "E. 工作型態與日常", w: "leave", kk: "/liv/", l: "★", m: "休假", ex: "我下週請 leave。" },
+  { c: "E. 工作型態與日常", w: "annual leave", kk: "/ˈænjuəl liv/", l: "★", m: "特休／年假", ex: "請 annual leave。" },
+  { c: "E. 工作型態與日常", w: "sick leave", kk: "/sɪk liv/", l: "★", m: "病假", ex: "他請 sick leave。" },
+  { c: "E. 工作型態與日常", w: "comp time", kk: "/ˈkɑmp ˌtaɪm/", l: "☆", m: "補休", ex: "換 comp time。" },
+  { c: "E. 工作型態與日常", w: "commute", kk: "/kəˈmjut/", l: "★", m: "通勤", ex: "今天 commute 很久。" },
+  { c: "E. 工作型態與日常", w: "workload", kk: "/ˈwɝkˌlod/", l: "★", m: "工作量", ex: "workload 很重。" },
+  { c: "E. 工作型態與日常", w: "bandwidth", kk: "/ˈbændˌwɪdθ/", l: "☆", m: "時間、心力", ex: "我 bandwidth 不夠。" },
+  { c: "E. 工作型態與日常", w: "happy hour", kk: "/ˈhæpi ˈaʊɚ/", l: "☆", m: "下班小酌", ex: "下午 happy hour。" },
+  { c: "E. 工作型態與日常", w: "TGIF", kk: "/ˌti dʒi aɪ ˈɛf/", l: "☆", m: "週五了、太好了", ex: "TGIF！" },
+  { c: "E. 工作型態與日常", w: "shift", kk: "/ʃɪft/", l: "★", m: "班別", ex: "今天上哪個 shift？" },
+  { c: "E. 工作型態與日常", w: "cover", kk: "/ˈkʌvɚ/", l: "★", m: "代班、支援、涵蓋", ex: "我幫你 cover。" },
+  { c: "E. 工作型態與日常", w: "Line", kk: "/laɪn/", l: "★", m: "用 Line 聯繫", ex: "我 Line 你。" },
+  { c: "E. 工作型態與日常", w: "OK", kk: "/ˌo ˈke/", l: "★", m: "確認、同意", ex: "OK，先這樣。" },
+  { c: "E. 工作型態與日常", w: "bye-bye", kk: "/ˈbaɪˌbaɪ/", l: "△", m: "再見", ex: "先 bye-bye。" },
+  { c: "E. 工作型態與日常", w: "flex / flexible", kk: "/flɛks/", l: "★", m: "彈性工時", ex: "公司有 flex 制度。" },
+  { c: "E. 工作型態與日常", w: "core hours", kk: "/kɔr ˈaʊɚz/", l: "☆", m: "核心上班時段", ex: "core hours 是 10 點到 4 點。" },
+  { c: "E. 工作型態與日常", w: "capacity", kk: "/kəˈpæsəti/", l: "★", m: "產能、可承接量", ex: "這個月 capacity 已經滿了。" },
+
+  // F. 績效、目標與財務管理
+  { c: "F. 績效與財務管理", w: "run rate", kk: "/ˈrʌn ˌret/", l: "☆", m: "業績預估、達成進度", ex: "用 run rate 推本月。" },
+  { c: "F. 績效與財務管理", w: "overall", kk: "/ˌovɚˈɔl/", l: "★", m: "整體的", ex: "Overall 來看還行。" },
+  { c: "F. 績效與財務管理", w: "over budget", kk: "/ˌovɚ ˈbʌdʒɪt/", l: "☆", m: "超編、超出預算", ex: "這專案 over budget。" },
+  { c: "F. 績效與財務管理", w: "below budget", kk: "/bɪˈlo ˈbʌdʒɪt/", l: "☆", m: "低於預算、未達標", ex: "目前 below budget。" },
+  { c: "F. 績效與財務管理", w: "momentum", kk: "/moˈmɛntəm/", l: "★", m: "動能、衝勁", ex: "延續上個月的 sales momentum。" },
+  { c: "F. 績效與財務管理", w: "action", kk: "/ˈækʃən/", l: "★", m: "行動、後續作為", ex: "後續 action 是什麼？" },
+  { c: "F. 績效與財務管理", w: "checklist", kk: "/ˈtʃɛkˌlɪst/", l: "★", m: "檢核表、待辦清單", ex: "照 checklist 跑一遍。" },
+  { c: "F. 績效與財務管理", w: "feedback", kk: "/ˈfidˌbæk/", l: "★", m: "回饋、意見", ex: "客戶 feedback 整理一下。" },
+  { c: "F. 績效與財務管理", w: "review", kk: "/rɪˈvju/", l: "★", m: "檢討、回顧", ex: "下週 review 這季。" },
+  { c: "F. 績效與財務管理", w: "incentive", kk: "/ɪnˈsɛntɪv/", l: "★", m: "業務獎金、獎勵方案", ex: "這檔 incentive 加碼 3% 可以增加多少產能？" },
+  { c: "F. 績效與財務管理", w: "parameter", kk: "/pəˈræmətɚ/", l: "★", m: "參數、計算變數", ex: "試算模型裡先固定這個 parameter 再推算。" },
+  { c: "F. 績效與財務管理", w: "percent", kk: "/pɚˈsɛnt/", l: "★", m: "百分比、趴數", ex: "成長幾 percent？" },
+  { c: "F. 績效與財務管理", w: "coach", kk: "/kotʃ/", l: "★", m: "指導、帶領", ex: "你來 coach 新人。" },
+  { c: "F. 績效與財務管理", w: "try", kk: "/traɪ/", l: "★", m: "試試看", ex: "先 try 一版。" },
+  { c: "F. 績效與財務管理", w: "promise", kk: "/ˈprɑmɪs/", l: "★", m: "保證、承諾", ex: "我 promise 明天給。" },
+  { c: "F. 績效與財務管理", w: "get out", kk: "/ˈɡɛt ˌaʊt/", l: "△", m: "退出、弄走", ex: "這需求先 get out。" },
+
+  // G. 業務、行銷與通路
+  { c: "G. 業務、行銷與通路", w: "top sales", kk: "/ˌtɑp ˈselz/", l: "☆", m: "頂尖業務員", ex: "他是今年 top sales。" },
+  { c: "G. 業務、行銷與通路", w: "upsell", kk: "/ˈʌpˌsɛl/", l: "☆", m: "向上銷售、追加銷售", ex: "趁這波 upsell。" },
+  { c: "G. 業務、行銷與通路", w: "cross-sell", kk: "/ˈkrɔsˌsɛl/", l: "★", m: "交叉銷售", ex: "既有客戶可以再做 cross-sell。" },
+  { c: "G. 業務、行銷與通路", w: "bundle", kk: "/ˈbʌndəl/", l: "★", m: "搭售、綑綁銷售方案", ex: "把傷害險與醫療附約直接 bundle 在主約一起賣。" },
+  { c: "G. 業務、行銷與通路", w: "profile", kk: "/ˈproˌfaɪl/", l: "★", m: "客群輪廓、畫像", ex: "先分析這批高資產客戶的 customer profile。" },
+  { c: "G. 業務、行銷與通路", w: "tailor-made", kk: "/ˈtelɚˌmed/", l: "☆", m: "量身定做", ex: "這提案是 tailor-made。" },
+  { c: "G. 業務、行銷與通路", w: "broker", kk: "/ˈbrokɚ/", l: "☆", m: "保險經紀人", ex: "這件要跟 broker 對。" },
+  { c: "G. 業務、行銷與通路", w: "banca", kk: "/ˈbæŋkə/", l: "★", m: "銀行保險通路", ex: "黃總以前在 Banca 通路專門培訓理專賣高額保單。" },
+  { c: "G. 業務、行銷與通路", w: "third party", kk: "/ˌθɝd ˈpɑrti/", l: "★", m: "第三方", ex: "third party 要簽保密。" },
+  { c: "G. 業務、行銷與通路", w: "channel head", kk: "/ˈtʃænəl ˌhɛd/", l: "☆", m: "通路主管", ex: "channel head 今天會參加。" },
+  { c: "G. 業務、行銷與通路", w: "keyman / key-man", kk: "/ˈkiˌmæn/", l: "☆", m: "關鍵核心人物", ex: "他是客戶的 keyman。" },
+  { c: "G. 業務、行銷與通路", w: "role-play", kk: "/ˈrolˌple/", l: "★", m: "模擬情境對練、角色扮演", ex: "新人上線前要先跟 AI 進行三輪話術的 role-play。" },
+  { c: "G. 業務、行銷與通路", w: "Inbound", kk: "/ˈɪnbaʊnd/", l: "☆", m: "進線（客戶主動來電）", ex: "今天 Inbound 進線量不錯。" },
+  { c: "G. 業務、行銷與通路", w: "Outbound", kk: "/ˈaʊtbaʊnd/", l: "☆", m: "外撥（主動打給客戶）", ex: "這批是 Outbound 名單。" },
+  { c: "G. 業務、行銷與通路", w: "Lead / Leads", kk: "/lid/ / lidz/", l: "☆", m: "名單、潛在客戶", ex: "這批 Leads 品質如何？" },
+  { c: "G. 業務、行銷與通路", w: "Win-back", kk: "/ˈwɪnˌbæk/", l: "★", m: "赢回、流失客戶挽回", ex: "這季主打 Win-back 名單。" },
+  { c: "G. 業務、行銷與通路", w: "Reactivation", kk: "/riˌæktəˈveʃən/", l: "☆", m: "重新激活、休眠客戶喚醒", ex: "Dormant 客戶要做 Reactivation。" },
+  { c: "G. 業務、行銷與通路", w: "Lapsed", kk: "/læpst/", l: "☆", m: "失效、停效客戶", ex: "Lapsed 名單轉換率通常較低。" },
+  { c: "G. 業務、行銷與通路", w: "Dormant", kk: "/ˈdɔrmənt/", l: "☆", m: "休眠客戶", ex: "這批是長期沒互動的 Dormant 客戶。" },
+  { c: "G. 業務、行銷與通路", w: "Retention", kk: "/rɪˈtɛnʃən/", l: "★", m: "留存、既有客戶經營", ex: "Retention 比新客開發更重要。" },
+  { c: "G. 業務、行銷與通路", w: "Renewal", kk: "/rɪˈnuəl/", l: "★", m: "續期、續保", ex: "Renewal 名單要提前一個月處理。" },
+  { c: "G. 業務、行銷與通路", w: "Orphan", kk: "/ˈɔrfən/", l: "☆", m: "孤兒保單客戶", ex: "Orphan 保戶要重新分配業務員。" },
+  { c: "G. 業務、行銷與通路", w: "In-force", kk: "/ˈɪnˌfɔrs/", l: "☆", m: "有效保單客戶", ex: "只針對 In-force 客戶做加購。" },
+  { c: "G. 業務、行銷與通路", w: "Prospect", kk: "/ˈprɑspɛkt/", l: "★", m: "潛在客戶", ex: "這批 Prospect 還沒成交。" },
+  { c: "G. 業務、行銷與通路", w: "Cold Lead", kk: "/koʊld lid/", l: "☆", m: "冷名單", ex: "Cold Lead 的接通率比較低。" },
+  { c: "G. 業務、行銷與通路", w: "Warm Lead", kk: "/wɔrm lid/", l: "☆", m: "溫名單", ex: "Warm Lead 可以優先撥打。" },
+  { c: "G. 業務、行銷與通路", w: "Hot Lead", kk: "/hɑt lid/", l: "☆", m: "熱名單", ex: "Hot Lead 要立刻跟進。" },
+
+  // H. 科技、系統與檔案
+  { c: "H. 科技、系統與檔案", w: "IVR", kk: "/ˌaɪ vi ˈɑr/", l: "☆", m: "互動式語音應答", ex: "電話 IVR 要先按一。" },
+  { c: "H. 科技、系統與檔案", w: "POS", kk: "/ˌpi o ˈɛs/", l: "☆", m: "POS 系統", ex: "POS 系統要抽檢。" },
+  { c: "H. 科技、系統與檔案", w: "key / key-in", kk: "/ki/、/ˈkiˌɪn/", l: "★", m: "鍵入、建檔", ex: "這份資料今天要 key-in 完。" },
+  { c: "H. 科技、系統與檔案", w: "run", kk: "/rʌn/", l: "★", m: "跑流程、執行作業", ex: "先 run 一次報表。" },
+  { c: "H. 科技、系統與檔案", w: "B2B", kk: "/ˌbi tʊ ˈbi/", l: "☆", m: "企業對企業", ex: "B2B 系統明天上線。" },
+  { c: "H. 科技、系統與檔案", w: "deployment", kk: "/dɪˈplɔɪmənt/", l: "★", m: "佈署、系統發布", ex: "週六晚上進行資料庫主機的 deployment。" },
+  { c: "H. 科技、系統與檔案", w: "migration", kk: "/maɪˈɡreʃən/", l: "★", m: "遷移、資料移轉", ex: "舊系統的保單資料 migration 預計下週完成。" },
+  { c: "H. 科技、系統與檔案", w: "staging", kk: "/ˈstedʒɪŋ/", l: "☆", m: "測試模擬環境", ex: "程式先在 staging 環境測過，沒問題再推到正式機。" },
+  { c: "H. 科技、系統與檔案", w: "hotfix", kk: "/ˈhɑtˌfɪks/", l: "★", m: "緊急修補、熱修復", ex: "報表試算邏輯有 bug，今天先上一版 hotfix。" },
+  { c: "H. 科技、系統與檔案", w: "downtime", kk: "/ˈdaʊnˌtaɪm/", l: "☆", m: "系統停機時間", ex: "維護期間的 downtime 盡量壓在兩小時以內。" },
+  { c: "H. 科技、系統與檔案", w: "legacy", kk: "/ˈlɛɡəsi/", l: "★", m: "舊有的、遺留系統", ex: "經代後台還有很多 legacy code 需要重構。" },
+  { c: "H. 科技、系統與檔案", w: "benchmark", kk: "/ˈbɛntʃˌmɑrk/", l: "★", m: "基準、效能評測", ex: "拿同業前三大的數據來做 benchmark。" },
+  { c: "H. 科技、系統與檔案", w: "Hey Cortana", kk: "/he kɔrˈtænə/", l: "☆", m: "微軟語音助理喚醒詞", ex: "開會前測試視訊設備的 Hey Cortana 功能。" },
+
+  // I. 策略、思考與評估
+  { c: "I. 策略、思考與評估", w: "make sense", kk: "/mek sɛns/", l: "★", m: "合理、有邏輯", ex: "這數字的推導過程不太 make sense。" },
+  { c: "I. 策略、思考與評估", w: "sense", kk: "/sɛns/", l: "★", m: "常識、敏銳度", ex: "這新人做事滿有 sense 的。" },
+  { c: "I. 策略、思考與評估", w: "solid", kk: "/ˈsɑlɪd/", l: "★", m: "扎實、可靠", ex: "這個數據佐證需要更 solid 一點。" },
+  { c: "I. 策略、思考與評估", w: "insight", kk: "/ˈɪnˌsaɪt/", l: "★", m: "洞察力、見解", ex: "從這份報表裡有看到什麼 insight 嗎？" },
+  { c: "I. 策略、思考與評估", w: "mindset", kk: "/ˈmaɪndˌsɛt/", l: "★", m: "心態、思維模式", ex: "團隊面對變化的 mindset 要調整。" },
+  { c: "I. 策略、思考與評估", w: "rough", kk: "/rʌf/", l: "★", m: "粗略的、大概的", ex: "先抓個 rough 的時程和預算給老闆。" },
+  { c: "I. 策略、思考與評估", w: "trade-off", kk: "/ˈtredˌɔf/", l: "★", m: "取捨、權衡", ex: "速度跟品質之間要做好 trade-off。" },
+  { c: "I. 策略、思考與評估", w: "leverage", kk: "/ˈlɛvərɪdʒ/", l: "★", m: "借力、善用（資源）", ex: "我們可以 leverage 既有的用戶名單。" },
+  { c: "I. 策略、思考與評估", w: "bottleneck", kk: "/ˈbɑtəlˌnɛk/", l: "★", m: "瓶頸、卡點", ex: "現在流程的 bottleneck 在哪裡？" },
+  { c: "I. 策略、思考與評估", w: "pain point", kk: "/ˈpen ˌpɔɪnt/", l: "★", m: "痛點", ex: "要先找出客戶真正的 pain point。" },
+  { c: "I. 策略、思考與評估", w: "scale", kk: "/skel/", l: "☆", m: "擴大規模、擴展", ex: "這個商業模式很難 scale 起來。" },
+  { c: "I. 策略、思考與評估", w: "ballpark", kk: "/ˈbɔlˌpɑrk/", l: "★", m: "大概數字、粗估", ex: "先給我一個 ballpark 數字。" },
+  { c: "I. 策略、思考與評估", w: "low-hanging fruit", kk: "/ˈlo ˈhæŋɪŋ frut/", l: "☆", m: "容易達成的成果", ex: "先做 low-hanging fruit。" },
+  { c: "I. 策略、思考與評估", w: "win-win", kk: "/ˈwɪn ˌwɪn/", l: "★", m: "雙贏", ex: "找一個 win-win 的方案。" },
+  { c: "I. 策略、思考與評估", w: "synergy", kk: "/ˈsɪnɚdʒi/", l: "★", m: "綜效、加乘效應", ex: "保險業務跟電商會員名單結合能產生很大的 synergy。" },
+  { c: "I. 策略、思考與評估", w: "feasibility", kk: "/ˌfizəˈbɪləti/", l: "★", m: "可行性", ex: "先評估這個商業模式的 financial feasibility。" },
+  { c: "I. 策略、思考與評估", w: "sanity check", kk: "/ˈsænəti tʃɛk/", l: "★", m: "快速合理性檢查", ex: "簡報寄出前，數字先做一下 sanity check。" },
+  { c: "I. 策略、思考與評估", w: "head-to-head", kk: "/ˌhɛd tə ˈhɛd/", l: "☆", m: "正面交鋒、直球對決", ex: "我們這張分紅保單跟同業主力商品在市場上 head-to-head。" },
+  { c: "I. 策略、思考與評估", w: "bottom line", kk: "/ˈbɑtəm laɪn/", l: "★", m: "底線、損益底線", ex: "我們開出的分潤趴數已經是 bottom line 了。" },
+  { c: "I. 策略、思考與評估", w: "deal breaker", kk: "/ˈdil ˌbrekɚ/", l: "★", m: "破局條件（無法妥協的事）", ex: "資安認證如果沒過，對外商保險公司來說就是 deal breaker。" },
+  { c: "I. 策略、思考與評估", w: "table", kk: "/ˈtebəl/", l: "★", m: "擱置、暫緩討論（動詞）", ex: "這個爭議題目今天先 table，下次再談。" },
+
+  // J. 協作、溝通態度與互動
+  { c: "J. 協作與溝通態度", w: "murmur", kk: "/ˈmɝmɚ/", l: "△", m: "碎念、私下抱怨", ex: "客戶昨天開完會又在 murmur。" },
+  { c: "J. 協作與溝通態度", w: "highlight", kk: "/ˈhaɪˌlaɪt/", l: "★", m: "強調、被特別點名", ex: "這個缺失昨天被主管 highlight 了。" },
+  { c: "J. 協作與溝通態度", w: "push", kk: "/pʊʃ/", l: "★", m: "催促、推動", ex: "麻煩再去 push 一下廠商的進度。" },
+  { c: "J. 協作與溝通態度", w: "care", kk: "/kɛr/", l: "★", m: "在意、關心", ex: "大老闆其實很 care 這個案子的轉換率。" },
+  { c: "J. 協作與溝通態度", w: "support", kk: "/səˈpɔrt/", l: "★", m: "支援、協助", ex: "這塊業務需要其他部門來 support。" },
+  { c: "J. 協作與溝通態度", w: "wrap up", kk: "/ˈræp ˌʌp/", l: "★", m: "總結、收尾", ex: "會議結束前，我們大概 wrap up 一下。" },
+  { c: "J. 協作與溝通態度", w: "buy-in", kk: "/ˈbaɪˌɪn/", l: "★", m: "認同、支持買單", ex: "先拿到大老闆的 buy-in 再做。" },
+  { c: "J. 協作與溝通態度", w: "take ownership", kk: "/tek ˈonɚˌʃɪp/", l: "★", m: "當責、主動承擔", ex: "希望每個人都能對這塊 take ownership。" },
+  { c: "J. 協作與溝通態度", w: "push back", kk: "/ˈpʊʃ ˌbæk/", l: "★", m: "擋回去、表達反對意見", ex: "這個不合理的要求要勇敢 push back。" },
+  { c: "J. 協作與溝通態度", w: "challenge", kk: "/ˈtʃælɪndʒ/", l: "★", m: "提出質疑、挑戰", ex: "簡報時很容易被主管 challenge 數字。" },
+  { c: "J. 協作與溝通態度", w: "aggressive", kk: "/əˈɡrɛsɪv/", l: "★", m: "積極進取的、強勢的", ex: "這次商務談判的策略要 aggressive 一點。" },
+  { c: "J. 協作與溝通態度", w: "take the lead", kk: "/tek ðə lid/", l: "★", m: "帶頭、主導", ex: "這次你來 take the lead。" },
+
+  // K. 企劃、設計與產出
+  { c: "K. 企劃、設計與產出", w: "proposal", kk: "/prəˈpozəl/", l: "★", m: "提案報告", ex: "明天中午前要交出下一季的 proposal。" },
+  { c: "K. 企劃、設計與產出", w: "pitch", kk: "/pɪtʃ/", l: "☆", m: "提案、比稿", ex: "團隊下午要去 pitch 一個重量級新客戶。" },
+  { c: "K. 企劃、設計與產出", w: "draft", kk: "/dræft/", l: "★", m: "草稿、初版", ex: "設計師晚點會先給一版 draft 看看。" },
+  { c: "K. 企劃、設計與產出", w: "layout", kk: "/ˈleˌaʊt/", l: "★", m: "版面配置", ex: "這幾頁簡報的 layout 好像跑掉了。" },
+  { c: "K. 企劃、設計與產出", w: "know-how", kk: "/ˈnoˌhaʊ/", l: "★", m: "核心技術、門道", ex: "這是我們公司累積多年的關鍵 know-how。" },
+
+  // L. 工作狀態補遺
+  { c: "L. 工作狀態補遺", w: "loading", kk: "/ˈlodɪŋ/", l: "★", m: "工作負載", ex: "大家最近的 loading 都有點重。" },
+  { c: "L. 工作狀態補遺", w: "on board", kk: "/ɑn bɔrd/", l: "★", m: "到職、加入專案", ex: "這批新人預計下個月初 on board。" },
+  { c: "L. 工作狀態補遺", w: "pool", kk: "/pul/", l: "☆", m: "人才庫、資源池", ex: "把這些名單先放進 talent pool 裡。" },
+
+  // M. 數據比較、指標與營運分析
+  { c: "M. 數據比較與營運指標", w: "YoY", kk: "/ˌwaɪ o ˈwaɪ/", l: "★", m: "年增率（Year-over-Year）", ex: "這季營收 YoY 成長了 15%。" },
+  { c: "M. 數據比較與營運指標", w: "MoM", kk: "/ˌɛm o ˈɛm/", l: "★", m: "月增率（Month-over-Month）", ex: "活動結束後流量 MoM 下滑了一點。" },
+  { c: "M. 數據比較與營運指標", w: "QoQ", kk: "/ˌkju o ˈkju/", l: "★", m: "季增率（Quarter-over-Quarter）", ex: "毛利率 QoQ 有顯著改善。" },
+  { c: "M. 數據比較與營運指標", w: "WoW", kk: "/ˌdʌbəlju o ˈdʌbəlju/", l: "☆", m: "週增率（Week-over-Week）", ex: "註冊量 WoW 掉了兩個百分點。" },
+  { c: "M. 數據比較與營運指標", w: "YTD", kk: "/ˌwaɪ ti ˈdi/", l: "★", m: "年初至今累計（Year-to-Date）", ex: "先對一下 YTD 的業績達成率。" },
+  { c: "M. 數據比較與營運指標", w: "MTD", kk: "/ˌɛm ti ˈdi/", l: "☆", m: "月初至今累計（Month-to-Date）", ex: "目前 MTD 還差三十萬才達標。" },
+  { c: "M. 數據比較與營運指標", w: "QTD", kk: "/ˌkju ti ˈdi/", l: "☆", m: "季初至今累計（Quarter-to-Date）", ex: "這份只算到 QTD 的成效。" },
+  { c: "M. 數據比較與營運指標", w: "Q1 ~ Q4", kk: "/ˌkju ˈwʌn/ ~ /ˌkju ˈfɔr/", l: "★", m: "第一～第四季度", ex: "這個目標是 Q4 預算數還是實際推估？" },
+  { c: "M. 數據比較與營運指標", w: "H1 / H2", kk: "/ˌetʃ ˈwʌn/ / /ˌetʃ ˈtu/", l: "★", m: "上半年／下半年", ex: "H2 的策略會重新調整。" },
+  { c: "M. 數據比較與營運指標", w: "CTR", kk: "/ˌsi ti ˈɑr/", l: "★", m: "點擊率（Click-Through Rate）", ex: "新素材的 CTR 表現不錯。" },
+  { c: "M. 數據比較與營運指標", w: "CVR", kk: "/ˌsi vi ˈɑr/", l: "★", m: "轉換率（Conversion Rate）", ex: "落地頁改版提升了整體 CVR。" },
+  { c: "M. 數據比較與營運指標", w: "CAC", kk: "/kæk/ 或 /ˌsi e ˈsi/", l: "☆", m: "客戶獲取成本（CAC）", ex: "最近 CAC 飆高，先暫緩投放。" },
+  { c: "M. 數據比較與營運指標", w: "LTV", kk: "/ˌɛl ti ˈvi/", l: "☆", m: "顧客終身價值（Lifetime Value）", ex: "訂閱制更要看長期 LTV。" },
+  { c: "M. 數據比較與營運指標", w: "GMV", kk: "/ˌdʒi ɛm ˈvi/", l: "☆", m: "商品交易總額（GMV）", ex: "今年大促 GMV 預估會創新高。" },
+  { c: "M. 數據比較與營運指標", w: "ARPU", kk: "/ˈɑrˌpu/", l: "☆", m: "每用戶平均收入（ARPU）", ex: "靠加購方案來拉高 ARPU。" },
+  { c: "M. 數據比較與營運指標", w: "MAU", kk: "/ˈmaʊ/ 或 /ˌɛm e ˈju/", l: "☆", m: "月活躍用戶（MAU）", ex: "改版後 MAU 成長了 20%。" },
+  { c: "M. 數據比較與營運指標", w: "DAU", kk: "/ˈdaʊ/ 或 /ˌdi e ˈju/", l: "☆", m: "日活躍用戶（DAU）", ex: "核心指標鎖定在 DAU 的黏著度。" },
+  { c: "M. 數據比較與營運指標", w: "Churn rate", kk: "/ˈtʃɝn ˌret/", l: "☆", m: "客戶／用戶流失率", ex: "這季的 churn rate 偏高，要檢討。" },
+  { c: "M. 數據比較與營運指標", w: "NPS", kk: "/ˌɛn pi ˈɛs/", l: "☆", m: "淨推薦值（Net Promoter Score）", ex: "客服部的 NPS 創歷史新高。" },
+  { c: "M. 數據比較與營運指標", w: "Runway", kk: "/ˈrʌnˌwe/", l: "☆", m: "資金存活期（還能燒多久）", ex: "目前公司的 runway 還剩一年半。" },
+  { c: "M. 數據比較與營運指標", w: "run-up", kk: "/ˈrʌnˌʌp/", l: "☆", m: "衝刺期、活動前熱身階段", ex: "Q4 大促前的 run-up 階段名單要備妥。" },
+  { c: "M. 數據比較與營運指標", w: "traction", kk: "/ˈtrækʃən/", l: "☆", m: "市場牽引力、推廣成效", ex: "新的遠距投保專案在市場上有看到不錯的 traction。" },
+  { c: "M. 數據比較與營運指標", w: "conversion funnel", kk: "/kənˈvɝʒən ˈfʌnəl/", l: "★", m: "轉換漏斗", ex: "從名單撥打到進件的 conversion funnel 哪一段掉最多？" },
+  { c: "M. 數據比較與營運指標", w: "penetration rate", kk: "/ˌpɛnəˈtreʃən ret/", l: "☆", m: "滲透率", ex: "既有保戶加購健康險的 penetration rate 還能再拉高。" },
+
+  // N. 人工智慧與自動化
+  { c: "N. 人工智慧與自動化", w: "AI Agent", kk: "/ˌe aɪ ˈedʒənt/", l: "★", m: "AI 代理程式", ex: "我們要做一個能跨系統查資料的 AI Agent。" },
+  { c: "N. 人工智慧與自動化", w: "prompt", kk: "/prɑmpt/", l: "★", m: "提示詞、給 AI 的指令", ex: "你 prompt 怎麼下的？借我參考一下。" },
+  { c: "N. 人工智慧與自動化", w: "context", kk: "/ˈkɑnˌtɛkst/", l: "★", m: "上下文、背景資訊", ex: "prompt 裡多給一點 context，產出品質會更好。" },
+  { c: "N. 人工智慧與自動化", w: "hallucination", kk: "/həˌlusəˈneʃən/", l: "★", m: "（AI 的）幻覺、胡言亂語", ex: "這份分析要注意模型有沒有產生 hallucination。" },
+  { c: "N. 人工智慧與自動化", w: "copilot", kk: "/ˈkoˌpaɪlət/", l: "★", m: "副駕駛、AI 輔助助手", ex: "現在寫腳本或處理報表我都開著 copilot 當輔助。" },
+  { c: "N. 人工智慧與自動化", w: "use case", kk: "/ˈjus ˌkes/", l: "★", m: "應用場景、使用案例", ex: "我們先盤點部門內能導入自動化的 use case。" },
+  { c: "N. 人工智慧與自動化", w: "PoC", kk: "/ˌpi o ˈsi/", l: "★", m: "概念驗證（Proof of Concept）", ex: "先做一個小規模 PoC 給高層確認可行性。" },
+  { c: "N. 人工智慧與自動化", w: "LLM", kk: "/ˌɛl ɛl ˈɛm/", l: "★", m: "大型語言模型", ex: "我們這個專案底層要接哪一家 LLM？" },
+  { c: "N. 人工智慧與自動化", w: "RAG", kk: "/ræɡ/", l: "★", m: "檢索增強生成（Retrieval-Augmented Generation）", ex: "把內部規章做成 RAG，模型回答就有依據。" },
+  { c: "N. 人工智慧與自動化", w: "knowledge base", kk: "/ˈnɑlɪdʒ ˌbes/", l: "★", m: "知識庫", ex: "先把相關規範整理成完整的 knowledge base。" },
+  { c: "N. 人工智慧與自動化", w: "token", kk: "/ˈtokən/", l: "★", m: "詞元、標記", ex: "這份文件字數太多，會吃掉不少 token。" },
+  { c: "N. 人工智慧與自動化", w: "fine-tune", kk: "/ˈfaɪnˌtun/", l: "☆", m: "微調模型", ex: "通用模型如果不夠精準，再考慮用內部數據去 fine-tune。" },
+  { c: "N. 人工智慧與自動化", w: "grounding", kk: "/ˈɡraʊndɪŋ/", l: "☆", m: "事實錨定（基於真實數據）", ex: "讓 AI 的推論有 grounding，減少憑空捏造。" },
+  { c: "N. 人工智慧與自動化", w: "workflow", kk: "/ˈwɝkˌflo/", l: "★", m: "工作流、自動化流程", ex: "用 AI 把原本手動貼資料的 workflow 自動化。" },
+  { c: "N. 人工智慧與自動化", w: "pipeline", kk: "/ˈpaɪpˌlaɪn/", l: "☆", m: "資料管線、處理流水線", ex: "資料清理的 pipeline 跑順，AI 才能接手。" },
+  { c: "N. 人工智慧與自動化", w: "API call", kk: "/ˌe pi ˈaɪ kɔl/", l: "★", m: "API 呼叫、請求次數", ex: "要注意每次查詢的 API call 成本控制。" },
+  { c: "N. 人工智慧與自動化", w: "human-in-the-loop", kk: "/ˈhjumən ɪn ðə lup/", l: "★", m: "人在迴路（關鍵需人工複核）", ex: "送審合約必須維持 human-in-the-loop 的審核機制。" },
+  { c: "N. 人工智慧與自動化", w: "guardrail", kk: "/ˈɡɑrdˌrel/", l: "★", m: "護欄、安全防護限制", ex: "上線前要把資安跟隱私的 guardrail 設定好。" },
+  { c: "N. 人工智慧與自動化", w: "data leakage", kk: "/ˈdetə ˈlikɪdʒ/", l: "★", m: "資料外洩", ex: "絕對不能將機密資料傳入未受控平台，避免 data leakage。" },
+  { c: "N. 人工智慧與自動化", w: "agentic", kk: "/əˈdʒɛntɪk/", l: "☆", m: "具自主行動能力的（AI）", ex: "我們在測試 agentic workflow。" },
+  { c: "N. 人工智慧與自動化", w: "multimodal", kk: "/ˌmʌltiˈmodəl/", l: "☆", m: "多模態", ex: "新模型支援 multimodal 輸入。" },
+
+  // O. 保險合作、專業指標與跨國保險公司
+  { c: "O. 保險指標與機構", w: "par", kk: "/pɑr/", l: "★", m: "分紅保單（Participating Policy）", ex: "保誠在市場上的主力商品就是 par（分紅保單）。" },
+  { c: "O. 保險指標與機構", w: "non-par", kk: "/ˌnɑn ˈpɑr/", l: "☆", m: "不分紅保單", ex: "這張是標準的 non-par 純保障型保單。" },
+  { c: "O. 保險指標與機構", w: "UL", kk: "/ˌju ˈɛl/", l: "☆", m: "萬能壽險（Universal Life）", ex: "這張是利率敏感型的 UL 商品。" },
+  { c: "O. 保險指標與機構", w: "VA", kk: "/ˌvi ˈe/", l: "☆", m: "變額壽險（Variable Life）", ex: "VA 的保費通常固定，投資績效自負盈虧。" },
+  { c: "O. 保險指標與機構", w: "VUL", kk: "/ˌvi ju ˈɛl/", l: "☆", m: "變額萬能壽險", ex: "VUL 有變額二字即是投資型保單。" },
+  { c: "O. 保險指標與機構", w: "ILP", kk: "/ˌaɪ ɛl ˈpi/", l: "☆", m: "投資型保單（ILP）", ex: "這檔是連結基金的 ILP。" },
+  { c: "O. 保險指標與機構", w: "Unit-linked", kk: "/ˈjunɪt ˌlɪŋkt/", l: "☆", m: "單位連結型／連結基金型", ex: "Unit-linked 商品波動比較大。" },
+  { c: "O. 保險指標與機構", w: "WL", kk: "/ˌdʌbəlju ˈɛl/", l: "☆", m: "終身壽險（Whole Life）", ex: "傳統型主打還是 WL。" },
+  { c: "O. 保險指標與機構", w: "TL / Term", kk: "/ˌti ˈɛl/ / tɝm/", l: "☆", m: "定期壽險（Term Life）", ex: "先用 Term 做高額保障。" },
+  { c: "O. 保險指標與機構", w: "Endowment", kk: "/ɪnˈdaʊmənt/", l: "☆", m: "生死合險／養老險", ex: "這張是滿期給付的 Endowment。" },
+  { c: "O. 保險指標與機構", w: "Annuity", kk: "/əˈnuəti/", l: "☆", m: "年金險", ex: "退休規劃多半會搭配 Annuity。" },
+  { c: "O. 保險指標與機構", w: "ROP", kk: "/ˌɑr o ˈpi/", l: "☆", m: "還本型（Return of Premium）", ex: "這張有 ROP 設計，期滿可拿回保費。" },
+  { c: "O. 保險指標與機構", w: "CI", kk: "/ˌsi ˈaɪ/", l: "☆", m: "重大疾病險（Critical Illness）", ex: "主約加上 CI 附約。" },
+  { c: "O. 保險指標與機構", w: "LTC", kk: "/ˌɛl ti ˈsi/", l: "☆", m: "長期照護險（Long-Term Care）", ex: "現在很多客戶會加買 LTC。" },
+  { c: "O. 保險指標與機構", w: "PA", kk: "/ˌpi ˈe/", l: "☆", m: "意外險（Personal Accident）", ex: "PA 附約保費不貴。" },
+  { c: "O. 保險指標與機構", w: "UW / underwriting", kk: "/ˈʌndɚˌraɪtɪŋ/", l: "★", m: "核保", ex: "這個體況件要先送給產壽險公司的 UW 評估。" },
+  { c: "O. 保險指標與機構", w: "claim", kk: "/klem/", l: "★", m: "理賠", ex: "客戶詢問醫療險 claim 的給付明細。" },
+  { c: "O. 保險指標與機構", w: "persistency rate", kk: "/pɚˈsɪstənsi ret/", l: "★", m: "繼續率（保單第 13 個月、25 個月）", ex: "經代通路的 13 個月 persistency rate 必須維持在 85% 以上。" },
+  { c: "O. 保險指標與機構", w: "clawback", kk: "/ˈklɔˌbæk/", l: "★", m: "追回佣金（解約扣回）", ex: "保戶首年提早解約，業務端會面臨 commission clawback。" },
+  { c: "O. 保險指標與機構", w: "substandard", kk: "/ˌsʌbˈstændɚd/", l: "☆", m: "次標準體（弱體保單）", ex: "這張商品專門承保高血壓等 substandard 客群。" },
+  { c: "O. 保險指標與機構", w: "Interest-Sensitive", kk: "/ˈɪntrəst ˈsɛnsətɪv/", l: "☆", m: "利率變動型", ex: "這張是 Interest-Sensitive 的商品。" },
+  { c: "O. 保險指標與機構", w: "Interest-Sensitive Life", kk: "/ˈɪntrəst ˈsɛnsətɪv laɪf/", l: "☆", m: "利率變動型壽險", ex: "目前主推 Interest-Sensitive Life。" },
+  { c: "O. 保險指標與機構", w: "USD Policy", kk: "/ˌju ɛs ˈdi ˈpɑləsi/", l: "★", m: "美元保單", ex: "最近客戶比較喜歡買 USD Policy。" },
+  { c: "O. 保險指標與機構", w: "US Dollar Policy", kk: "/ˌju ɛs ˈdɑlɚ ˈpɑləsi/", l: "★", m: "美元保單", ex: "這張是 US Dollar Policy。" },
+  { c: "O. 保險指標與機構", w: "Foreign Currency Policy", kk: "/ˈfɔrən ˈkɝənsi ˈpɑləsi/", l: "★", m: "外幣保單", ex: "外幣保單通稱 Foreign Currency Policy。" },
+  { c: "O. 保險指標與機構", w: "FX Policy", kk: "/ˌɛf ˈɛks ˈpɑləsi/", l: "☆", m: "外幣保單（內部簡稱）", ex: "這季 FX Policy 銷售不錯。" },
+  { c: "O. 保險指標與機構", w: "Currency Policy", kk: "/ˈkɝənsi ˈpɑləsi/", l: "☆", m: "外幣保單（簡稱）", ex: "Currency Policy 的匯率風險要先說明。" },
+  { c: "O. 保險指標與機構", w: "Discretionary Account", kk: "/dɪˈskrɛʃəˌnɛri əˈkaʊnt/", l: "☆", m: "全委（全權委託）", ex: "全委門檻很高，通常是高資產客戶才做。" },
+  { c: "O. 保險指標與機構", w: "Quasi-Discretionary Account", kk: "/ˈkweɪzi dɪˈskrɛʃəˌnɛri/", l: "☆", m: "類全委", ex: "市面上大多數投資型保單都是類全委。" },
+  { c: "O. 保險指標與機構", w: "Declared Rate", kk: "/dɪˈklɛrd ret/", l: "☆", m: "宣告利率", ex: "UL 的帳戶價值是用 Declared Rate 計算。" },
+  { c: "O. 保險指標與機構", w: "Separate Account", kk: "/ˈsɛpərət əˈkaʊnt/", l: "☆", m: "分離帳戶", ex: "投資型保單的資金會進入 Separate Account。" },
+  { c: "O. 保險指標與機構", w: "Rider", kk: "/ˈraɪdɚ/", l: "★", m: "附約（Supplementary Benefit）", ex: "主約以外再加幾個 Rider。" },
+  { c: "O. 保險指標與機構", w: "APE", kk: "/ˌe pi ˈi/", l: "★", m: "年度等價保費（APE）", ex: "這次加碼方案主要看 APE 的達成率。" },
+  { c: "O. 保險指標與機構", w: "ANP", kk: "/ˌe ɛn ˈpi/", l: "★", m: "年化新契約保費（ANP）", ex: "先核算 6 到 8 月的累計 ANP。" },
+  { c: "O. 保險指標與機構", w: "ANC", kk: "/ˌe ɛn ˈsi/", l: "★", m: "年化佣金收入 / 年化新佣", ex: "報表上的年化佣金建議統一用 ANC 標註。" },
+  { c: "O. 保險指標與機構", w: "FYC", kk: "/ˌɛf waɪ ˈsi/", l: "★", m: "首年佣金（First Year Commission）", ex: "業務單位的報表是以 FYC 還是實收保費計算？" },
+  { c: "O. 保險指標與機構", w: "FYP", kk: "/ˌɛf waɪ ˈpi/", l: "☆", m: "首年保費（First Year Premium）", ex: "這批名單的平均 FYP 是多少？" },
+  { c: "O. 保險指標與機構", w: "VFA", kk: "/ˌvi ɛf ˈe/", l: "☆", m: "遠距視訊顧問／遠距面銷", ex: "透過 VFA 機制做遠距視訊投保，客單價可以大幅拉高。" },
+  { c: "O. 保險指標與機構", w: "Priority Pass / PP", kk: "/ˌpi ˈpi/", l: "★", m: "全球機場貴賓室卡", ex: "我們考慮把高空景觀下午茶做成類似 PP 卡的專屬權益。" },
+  { c: "O. 保險指標與機構", w: "VAS", kk: "/ˈvælju ˌædɪd ˈsɝvɪs/", l: "★", m: "加值服務（Value-Added Service）", ex: "這張保單除了身故保障，還提供高端健檢等 VAS。" },
+  { c: "O. 保險指標與機構", w: "Chubb", kk: "/tʃʌb/", l: "★", m: "安達保險／安達人壽", ex: "這檔專案我們主要跟 Chubb 對接核保條件。" },
+  { c: "O. 保險指標與機構", w: "PCA Life", kk: "/ˌpi si ˈe laɪf/", l: "★", m: "保誠人壽", ex: "保單加值服務打算跟 PCA Life 談合作。" },
+  { c: "O. 保險指標與機構", w: "Cardif", kk: "/ˈkɑrdɪf/", l: "★", m: "法國巴黎人壽（法巴）", ex: "這款投資型保單是跟 Cardif 共同設計的。" },
+  { c: "O. 保險指標與機構", w: "Allianz", kk: "/ˈæliənts/", l: "★", m: "安聯人壽／安聯保險", ex: "這批退休金規劃方案由 Allianz 承保。" },
+  { c: "O. 保險指標與機構", w: "AIA", kk: "/ˌe aɪ ˈe/", l: "★", m: "友邦人壽", ex: "AIA 在高資產客戶保障這塊經驗很豐富。" },
+
+  // 通路名單專用詞
+  { c: "通路電銷專用名單", w: "PGM", kk: "/ˌpi dʒi ˈɛm/", l: "☆", m: "電視購物節目", ex: "今天 PGM 的表現不錯。" },
+  { c: "通路電銷專用名單", w: "PGM List", kk: "/ˌpi dʒi ˈɛm lɪst/", l: "☆", m: "電視通路即時Cue線名單", ex: "這批是 PGM List。" },
+  { c: "通路電銷專用名單", w: "QND List", kk: "/ˌkju ɛn ˈdi lɪst/", l: "☆", m: "PGM未成交名單（非既有保戶）", ex: "QND List 要優先處理。" },
+  { c: "通路電銷專用名單", w: "POM List", kk: "/ˌpi o ˈɛm lɪst/", l: "☆", m: "保戶再行銷名單", ex: "POM List 的轉換率通常比較高。" },
+  { c: "通路電銷專用名單", w: "POM Upsell List", kk: "/ˌpi o ˈɛm ˈʌpˌsɛl lɪst/", l: "☆", m: "保戶加購／向上銷售名單", ex: "這波主打 POM Upsell List。" },
+  { c: "通路電銷專用名單", w: "NPOM List", kk: "/ˌɛn pi o ˈɛm lɪst/", l: "☆", m: "已無有效保單的保戶名單", ex: "NPOM List 要換話術。" },
+  { c: "通路電銷專用名單", w: "S2S List", kk: "/ˌɛs tu ˈɛs lɪst/", l: "☆", m: "東森問卷同意轉介名單", ex: "S2S List 是從 Inbound/Outbound 問卷來的。" },
+  { c: "通路電銷專用名單", w: "S2S Retargeting List", kk: "/ˌɛs tu ˈɛs riˈtɑrgətɪŋ lɪst/", l: "☆", m: "S2S再行銷名單（首派未成再派）", ex: "這批是 S2S Retargeting List。" }
+];
+
+let currentRate = 1.0;
+const rateLevels = [0.8, 1.0, 1.2, 2.0];
+let isMaskMode = false;
+let selectedCat = "all";
+
+// 連播核心狀態
+let isAutoPlaying = false;
+let isPaused = false;
+let autoPlayIndex = 0;
+let autoPlayTimer = null;
+let currentDisplayedItems = [];
+
+// 將個別詞段精確轉化為 TTS 標準讀音文本
+function normalizeToken(token) {
+  let t = token.trim();
+  if (!t) return "";
+
+  // 1. 精確發音替換表
+  const exactMap = {
+    "upsell": "up sell",
+    "YoY": "Why O Why",
+    "MoM": "M O M",
+    "WoW": "W O W",
+    "QoQ": "Q O Q",
+    "YTD": "Y T D",
+    "MTD": "M T D",
+    "QTD": "Q T D",
+    "ETA": "E T A",
+    "TBD": "T B D",
+    "TBC": "T B C",
+    "N/A": "N A",
+    "RAG": "R A G",
+    "UW": "U W",
+    "1:1": "one on one",
+    "S2S": "S to S",
+    "B2B": "B to B",
+    "Hey Cortana": "Hey Cortana",
+    "ops (operations)": "Ops, operations",
+    "ops": "Ops, operations"
+  };
+
+  if (exactMap[t]) return exactMap[t];
+
+  // 2. 處理季度或半年複合縮寫
+  if (t === "Q1 ~ Q4") return "Q 1 to Q 4";
+  if (/^Q[1-4]$/i.test(t)) return "Q " + t.slice(1);
+  if (/^H[1-2]$/i.test(t)) return "H " + t.slice(1);
+
+  // 3. 通用全大寫字母縮寫拆開唸字母音（排除特定保留詞如 par）
+  const keepAsWord = ["PAR"];
+  if (/^[A-Z]{2,}$/.test(t) && !keepAsWord.includes(t)) {
+    return t.split('').join(' ');
+  }
+
+  // 4. 若縮寫後接單字（如 PGM List, S2S List, POM Upsell List）
+  let parts = t.split(' ');
+  if (parts.length > 1) {
+    return parts.map(p => normalizeToken(p)).join(' ');
+  }
+
+  return t;
+}
+
+// 針對整串標題（含斜線處理）轉換發音文字
+function getPhoneticSpokenText(rawWord) {
+  let trimmed = rawWord.trim();
+  
+  // 優先攔截 N/A，避免被斜線邏輯切成 N or A
+  if (trimmed === "N/A") {
+    return "N A";
+  }
+
+  // 若含斜線，拆開成多個單元逐一處理並用 "or" 串接
+  if (trimmed.includes('/')) {
+    let subWords = trimmed.split('/');
+    return subWords.map(sw => normalizeToken(sw)).join(' or ');
+  }
+  return normalizeToken(trimmed);
+}
+
+// 語音朗讀封裝 (Promise)
+function speakWordPromise(rawWord) {
+  return new Promise((resolve) => {
+    if (!('speechSynthesis' in window)) {
+      alert("您的瀏覽器不支援語音合成！");
+      resolve();
+      return;
+    }
+    window.speechSynthesis.cancel();
+    
+    const textToSpeak = getPhoneticSpokenText(rawWord);
+
+    const utter = new SpeechSynthesisUtterance(textToSpeak);
+    utter.lang = 'en-US';
+    utter.rate = currentRate;
+    
+    utter.onend = () => resolve();
+    utter.onerror = () => resolve();
+
+    window.speechSynthesis.speak(utter);
+  });
+}
+
+// 建立分類標籤
+function initCategories() {
+  const catFilter = document.getElementById('catFilter');
+  const cats = Array.from(new Set(wordsData.map(i => i.c)));
+  cats.forEach(cat => {
+    const pill = document.createElement('span');
+    pill.className = 'cat-pill';
+    pill.textContent = cat;
+    pill.dataset.cat = cat;
+    pill.onclick = () => {
+      stopAutoPlay();
+      document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedCat = cat;
+      renderCards();
+    };
+    catFilter.appendChild(pill);
+  });
+
+  document.querySelector('.cat-pill[data-cat="all"]').onclick = function() {
+    stopAutoPlay();
+    document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    selectedCat = "all";
+    renderCards();
+  };
+}
+
+// 繪製單字卡
+function renderCards() {
+  const container = document.getElementById('cardContainer');
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+  container.innerHTML = '';
+
+  currentDisplayedItems = wordsData.filter(item => {
+    const matchCat = (selectedCat === "all" || item.c === selectedCat);
+    const matchQuery = !query || 
+      item.w.toLowerCase().includes(query) || 
+      item.kk.toLowerCase().includes(query) || 
+      item.m.toLowerCase().includes(query) || 
+      item.ex.toLowerCase().includes(query);
+    return matchCat && matchQuery;
+  });
+
+  currentDisplayedItems.forEach((item, index) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${index}`;
+    
+    let badgeClass = 'badge-core';
+    if (item.l === '☆') badgeClass = 'badge-scene';
+    if (item.l === '△') badgeClass = 'badge-warn';
+
+    card.innerHTML = `
+      <div>
+        <div class="card-top">
+          <div class="word-title">
+            <span>${item.w}</span>
+            <span class="speaker-icon">🔊</span>
+          </div>
+          <span class="badge ${badgeClass}">${item.l}</span>
+        </div>
+        <div class="phonetic">${item.kk}</div>
+        <div class="meaning">${item.m}</div>
+      </div>
+      <div class="example">${item.ex}</div>
+    `;
+
+    card.onclick = () => {
+      stopAutoPlay();
+      speakWordPromise(item.w);
+    };
+    container.appendChild(card);
+  });
+}
+
+// 連播控制邏輯
+async function startAutoPlay() {
+  if (currentDisplayedItems.length === 0) return;
+  isAutoPlaying = true;
+  isPaused = false;
+  updateControlButtons();
+
+  for (let i = autoPlayIndex; i < currentDisplayedItems.length; i++) {
+    if (!isAutoPlaying) break;
+
+    // 暫停時在此等候
+    while (isPaused) {
+      await new Promise(r => setTimeout(r, 200));
+      if (!isAutoPlaying) break;
+    }
+    if (!isAutoPlaying) break;
+
+    autoPlayIndex = i;
+    
+    // 高亮卡片並捲動
+    document.querySelectorAll('.card').forEach(c => {
+      c.classList.remove('is-playing', 'is-paused');
+    });
+    const targetCard = document.getElementById(`card-${i}`);
+    if (targetCard) {
+      targetCard.classList.add('is-playing');
+      targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 朗讀單字
+    await speakWordPromise(currentDisplayedItems[i].w);
+    
+    // 朗讀完畢間隔 1 秒
+    if (isAutoPlaying && !isPaused) {
+      await new Promise(r => { autoPlayTimer = setTimeout(r, 1000); });
+    }
+  }
+
+  if (isAutoPlaying && !isPaused) {
+    stopAutoPlay();
+  }
+}
+
+function togglePause() {
+  if (!isAutoPlaying) return;
+  isPaused = !isPaused;
+  
+  if (isPaused) {
+    clearTimeout(autoPlayTimer);
+    window.speechSynthesis.cancel();
+    const currentCard = document.getElementById(`card-${autoPlayIndex}`);
+    if (currentCard) {
+      currentCard.classList.remove('is-playing');
+      currentCard.classList.add('is-paused');
+    }
+  } else {
+    const currentCard = document.getElementById(`card-${autoPlayIndex}`);
+    if (currentCard) {
+      currentCard.classList.remove('is-paused');
+      currentCard.classList.add('is-playing');
+    }
+  }
+  updateControlButtons();
+}
+
+function stopAutoPlay() {
+  isAutoPlaying = false;
+  isPaused = false;
+  autoPlayIndex = 0;
+  clearTimeout(autoPlayTimer);
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('is-playing', 'is-paused'));
+  updateControlButtons();
+}
+
+// 介面按鈕狀態更新
+function updateControlButtons() {
+  const topPlay = document.getElementById('topPlayBtn');
+  const sidePlay = document.getElementById('sidePlayBtn');
+  const topPause = document.getElementById('topPauseBtn');
+  const sidePause = document.getElementById('sidePauseBtn');
+  const topStop = document.getElementById('topStopBtn');
+  const sideStop = document.getElementById('sideStopBtn');
+
+  if (isAutoPlaying) {
+    topPlay.disabled = true;
+    sidePlay.disabled = true;
+    topStop.disabled = false;
+    sideStop.disabled = false;
+    topPause.disabled = false;
+    sidePause.disabled = false;
+
+    if (isPaused) {
+      topPause.textContent = '▶ 繼續';
+      sidePause.textContent = '▶ 繼續';
+      topPause.classList.replace('btn-pause', 'btn-play');
+      sidePause.classList.replace('btn-pause', 'btn-play');
+    } else {
+      topPause.textContent = '⏸ 暫停';
+      sidePause.textContent = '⏸ 暫停';
+      topPause.classList.replace('btn-play', 'btn-pause');
+      sidePause.classList.replace('btn-play', 'btn-pause');
+    }
+  } else {
+    topPlay.disabled = false;
+    sidePlay.disabled = false;
+    topPause.disabled = true;
+    sidePause.disabled = true;
+    topStop.disabled = true;
+    sideStop.disabled = true;
+    topPause.textContent = '⏸ 暫停';
+    sidePause.textContent = '⏸ 暫停';
+    topPause.classList.replace('btn-play', 'btn-pause');
+    sidePause.classList.replace('btn-play', 'btn-pause');
+  }
+}
+
+// 綁定操作事件
+document.getElementById('sidePlayBtn').onclick = () => { if (!isAutoPlaying) startAutoPlay(); };
+document.getElementById('topPlayBtn').onclick = () => { if (!isAutoPlaying) startAutoPlay(); };
+
+document.getElementById('sidePauseBtn').onclick = togglePause;
+document.getElementById('topPauseBtn').onclick = togglePause;
+
+document.getElementById('sideStopBtn').onclick = stopAutoPlay;
+document.getElementById('topStopBtn').onclick = stopAutoPlay;
+
+document.getElementById('searchInput').addEventListener('input', () => {
+  stopAutoPlay();
+  renderCards();
+});
+
+document.getElementById('rateBtn').addEventListener('click', function() {
+  const currentIndex = rateLevels.indexOf(currentRate);
+  const nextIndex = (currentIndex + 1) % rateLevels.length;
+  currentRate = rateLevels[nextIndex];
+  this.textContent = `語速：${currentRate.toFixed(1)}x`;
+  this.dataset.rate = currentRate;
+});
+
+document.getElementById('maskToggleBtn').addEventListener('click', function() {
+  isMaskMode = !isMaskMode;
+  document.body.classList.toggle('mask-mode', isMaskMode);
+  this.textContent = isMaskMode ? "關閉遮蔽模式" : "開啟遮蔽模式";
+  this.classList.toggle('active', isMaskMode);
+});
+
+// 初始化啟動
+initCategories();
+renderCards();
+</script>
+</body>
+</html>
