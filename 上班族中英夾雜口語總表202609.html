@@ -15,6 +15,7 @@
     --card-bg: #ffffff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
   body { 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
     background: var(--bg-main); 
@@ -91,6 +92,30 @@
   }
   .floating-controls .btn { min-width: 100px; padding: 10px 14px; }
 
+  /* 浮動回到頂部按鈕 */
+  .backtop {
+    position: fixed;
+    right: 22px;
+    bottom: 24px;
+    z-index: 1000;
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 50%;
+    background: #0f172a;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .backtop:hover { background: #1e293b; transform: scale(1.05); }
+  .backtop.show { display: flex; }
+
   /* 手機與窄螢幕：底部常駐列 */
   @media (max-width: 768px) {
     body { padding-bottom: 90px; }
@@ -107,6 +132,13 @@
       box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
     }
     .floating-controls .btn { flex: 1; padding: 10px 8px; font-size: 0.9rem; }
+    .backtop {
+      bottom: 80px; /* 手機端避免遮擋底部常駐控制條 */
+      right: 16px;
+      width: 42px;
+      height: 42px;
+      font-size: 18px;
+    }
   }
 
   /* Category Filter Pills */
@@ -154,10 +186,10 @@
   <button class="btn btn-stop" id="sideStopBtn" disabled>⏹ 停止</button>
 </div>
 
-<div class="container">
+<div class="container" id="topHeader">
   <header>
     <h1>上班族中英夾雜口語記誦庫</h1>
-    <p class="subtitle">共收錄 230 個高頻實務詞彙｜已納入縮寫英文全名｜全平台相容支援</p>
+    <p class="subtitle">協坤用AI匯整收錄 230 個高頻實務詞彙｜已納入縮寫英文全名｜全平台相容支援</p>
   </header>
 
   <div class="control-panel">
@@ -177,11 +209,14 @@
   <div class="grid" id="cardContainer"></div>
 </div>
 
+<!-- 往上按鈕 -->
+<button class="backtop" id="backtop" title="回到上方">↑</button>
+
 <script>
 const wordsData = [
   // A. 會議與溝通
   { c: "A. 會議與溝通", w: "meeting", kk: "/ˈmitɪŋ/", l: "★", m: "會議", ex: "等等 meeting 先 sync 一下。" },
-  { c: "A. 會議與溝通", w: "con-call", full: "Conference Call", kk: "/ˈkɑnˌkɔl/", l: "★", m: "電話會議、視訊會議", ex: "下午有 con-call。" },
+  { c: "A. 會議與溝通", w: "con-call / con call", full: "Conference Call", kk: "/ˈkɑnˌkɔl/", l: "★", m: "電話會議、視訊會議", ex: "下午有 con-call。" },
   { c: "A. 會議與溝通", w: "sync", full: "Synchronize", kk: "/sɪŋk/", l: "★", m: "同步", ex: "我們先 sync 進度。" },
   { c: "A. 會議與溝通", w: "align", kk: "/əˈlaɪn/", l: "★", m: "對齊、確認共識", ex: "先跟主管 align。" },
   { c: "A. 會議與溝通", w: "loop in", kk: "/lup ɪn/", l: "★", m: "把某人加入溝通／副本", ex: "記得 loop in 客戶。" },
@@ -604,6 +639,18 @@ let autoPlayTimer = null;
 let currentDisplayedItems = [];
 let currentPlaySessionId = 0;
 
+// 語音引擎支援檢查
+const synth = window.speechSynthesis || null;
+
+// LINE等內建瀏覽器友善提示
+function checkSpeechSupport() {
+  if (!synth) {
+    alert("您目前使用的瀏覽器（如 LINE 內建瀏覽器）不支援語音朗讀功能。\n\n💡 請點擊畫面右上角的「⋮」或「分享」按鈕，選擇「以預設瀏覽器開啟」（如 Chrome / Safari），即可正常聆聽發音。");
+    return false;
+  }
+  return true;
+}
+
 function normalizeToken(token) {
   let t = token.trim();
   if (!t) return "";
@@ -666,13 +713,13 @@ function getPhoneticSpokenText(rawWord) {
 
 function speakWordPromise(rawWord) {
   return new Promise((resolve) => {
-    if (!('speechSynthesis' in window)) {
+    if (!checkSpeechSupport()) {
       resolve();
       return;
     }
 
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
+    if (synth.paused) {
+      synth.resume();
     }
     
     const textToSpeak = getPhoneticSpokenText(rawWord);
@@ -694,7 +741,7 @@ function speakWordPromise(rawWord) {
     // 安全防護超時
     setTimeout(complete, 1800);
 
-    window.speechSynthesis.speak(utter);
+    synth.speak(utter);
   });
 }
 
@@ -811,6 +858,7 @@ async function runPlayLoop(sessionId) {
 }
 
 function startAutoPlay() {
+  if (!checkSpeechSupport()) return;
   if (currentDisplayedItems.length === 0) return;
   isAutoPlaying = true;
   isPaused = false;
@@ -877,6 +925,13 @@ function updateControlButtons() {
     sidePause.classList.replace('btn-play', 'btn-pause');
   }
 }
+
+// 往上按鈕控制
+const backtopBtn = document.getElementById('backtop');
+window.addEventListener('scroll', () => {
+  backtopBtn.classList.toggle('show', window.scrollY > 300);
+}, { passive: true });
+backtopBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
 // 事件綁定
 document.getElementById('sidePlayBtn').onclick = () => { if (!isAutoPlaying) startAutoPlay(); };
